@@ -1376,6 +1376,8 @@ a {
         flex-wrap: wrap;
         gap: 10px;
         padding: 10px 16px;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .logo {
@@ -1384,12 +1386,12 @@ a {
     }
 
     .nav-icons {
-        order: 3;
-        width: 100%;
+        order: 2;
+        width: auto;
         justify-content: flex-end;
         gap: 0.75rem;
-        margin-top: 8px;
-        flex-wrap: wrap;
+        margin-top: 0;
+        flex-wrap: nowrap;
     }
 
     .nav-menu {
@@ -1417,17 +1419,20 @@ a {
 
     .menu-toggle {
         display: block;
-        order: 2;
-        margin-left: auto;
+        order: 3;
+        margin-left: 0;
     }
 
     .nav-icons .auth-btn {
-        padding: 8px 10px;
+        padding: 8px 12px;
         font-size: 0.85rem;
+        min-width: 90px;
+        justify-content: center;
+        gap: 6px;
     }
 
     .nav-icons .auth-btn span {
-        display: none;
+        display: inline-block;
     }
 
     .nav-icons .cart-btn {
@@ -1446,6 +1451,11 @@ a {
         top: -6px;
         right: -6px;
         font-size: 0.7rem;
+    }
+
+    .nav-icons button,
+    .nav-icons .menu-toggle {
+        min-width: auto;
     }
 
     /* Hero Section */
@@ -1677,11 +1687,14 @@ a {
     }
 
     .nav-icons .auth-btn {
-        padding: 8px 10px;
+        padding: 8px 12px;
+        min-width: 90px;
+        justify-content: center;
+        gap: 6px;
     }
 
     .nav-icons .auth-btn span {
-        display: none;
+        display: inline-block;
     }
 
     .menu-toggle {

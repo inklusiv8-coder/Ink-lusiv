@@ -23,17 +23,21 @@
                 <li><a href="checkout.html" class="nav-link">Checkout</a></li>
             </ul>
             <div class="nav-icons">
-                <button class="cart-btn" id="cartBtn">
+                <button class="cart-btn" id="cartBtn" aria-label="View cart" title="Cart">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </button>
-                <button class="auth-btn" id="loginBtn">
+                <button class="auth-btn" id="loginBtn" aria-label="Login" title="Login">
                     <i class="fas fa-sign-in-alt"></i>
                     <span>Login</span>
                 </button>
-                <button class="auth-btn register-btn" id="registerBtn">
+                <button class="auth-btn register-btn" id="registerBtn" aria-label="Register" title="Register">
                     <i class="fas fa-user-plus"></i>
                     <span>Register</span>
+                </button>
+                <button class="auth-btn logout-btn" id="logoutBtn" aria-label="Logout" title="Logout" style="display: none;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
                 </button>
                 <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" title="Toggle navigation menu">
                     <i class="fas fa-bars"></i>
