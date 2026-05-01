@@ -1,6 +1,10 @@
 // Local data configuration only.
 
-const useApi = !window.location.hostname.includes('github.io') && !window.location.protocol.startsWith('file');
+const RENDER_API_HOST = 'https://ink-lusiv.onrender.com';
+const useApi = window.location.protocol !== 'file:';
+const apiBase = window.location.hostname.includes('github.io')
+    ? RENDER_API_HOST
+    : (useApi ? window.location.origin : RENDER_API_HOST);
 
 // ================== Hero Advert Carousel ==================
 const carouselImages = [
@@ -91,7 +95,7 @@ async function fetchProducts(filter = 'all') {
 
     if (useApi) {
         try {
-            const response = await fetch(`/api/products?category=${encodeURIComponent(filter)}`);
+            const response = await fetch(`${apiBase}/api/products?category=${encodeURIComponent(filter)}`);
             if (response.ok) {
                 data = await response.json();
             } else {
@@ -102,7 +106,7 @@ async function fetchProducts(filter = 'all') {
         }
     }
 
-        // Final fallback to local JSON
+    // Final fallback to local JSON
     if (!data) {
         try {
             const fallbackPaths = [
