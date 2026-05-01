@@ -112,6 +112,7 @@ async function fetchProducts(filter = 'all') {
             ];
 
             let fallbackResponse = null;
+            let fallbackError = null;
             for (let i = 0; i < fallbackPaths.length && !data; i++) {
                 const path = fallbackPaths[i];
                 try {
@@ -119,14 +120,17 @@ async function fetchProducts(filter = 'all') {
                     if (fallbackResponse.ok) {
                         data = await fallbackResponse.json();
                     } else {
-                        console.warn('Product fetch failed:', fallbackResponse.status, fallbackResponse.statusText, 'path:', path);
+                        fallbackError = `Product fetch failed: ${fallbackResponse.status} ${fallbackResponse.statusText} path: ${path}`;
                     }
                 } catch (err) {
-                    console.warn('Error fetching products from path:', path, err);
+                    fallbackError = `Error fetching products from path: ${path} ${err}`;
                 }
             }
 
             if (!data) {
+                if (fallbackError) {
+                    console.warn('Local product JSON fallback failed:', fallbackError);
+                }
                 data = [];
             }
         } catch (fallbackError) {
