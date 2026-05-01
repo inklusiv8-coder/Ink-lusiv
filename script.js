@@ -98,6 +98,14 @@ async function fetchProducts(filter = 'all') {
             const response = await fetch(`${apiBase}/api/products?category=${encodeURIComponent(filter)}`);
             if (response.ok) {
                 data = await response.json();
+                if (Array.isArray(data) && data.length === 0) {
+                    console.warn('Backend API returned an empty product list; falling back to local JSON.');
+                    data = null;
+                }
+                if (!Array.isArray(data)) {
+                    console.warn('Backend API returned invalid product data; falling back to local JSON.');
+                    data = null;
+                }
             } else {
                 console.warn('Backend API returned non-ok status:', response.status);
             }
