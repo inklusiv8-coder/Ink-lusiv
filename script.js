@@ -1,3 +1,9 @@
+// ================== Supabase Configuration ==================
+const SUPABASE_URL = 'https://tkjwwtwtjatcbdxvwwzu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmand3dHd0amF0Y2JkeHZ3d3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDY4MDAsImV4cCI6MjA5Mjk4MjgwMH0.YHq7dXiiJNJrbm1m2FRtKzgqnQeT-OFci6I7dC2mwbs';
+
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
 // ================== Hero Advert Carousel ==================
 const carouselImages = [
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0XRWj0Xp3r4FF2VvQDLR3YGB0gyM5KqF-8Q&s',
@@ -82,6 +88,79 @@ function updateChatIndicator() {
 // ================== Product Data ==================
 let products = [];
 
+async function fetchProductsFromSupabase(filter = 'all') {
+    if (!supabaseClient) {
+        throw new Error('Supabase client not available');
+    }
+
+    const validCategories = { 'leather': 'products_leather', 'metal': 'products_metal', 'silicone': 'products_silicone' };
+
+    try {
+        let allProducts = [];
+
+        if (filter === 'all') {
+            // Fetch from all three tables
+            for (const [category, tableName] of Object.entries(validCategories)) {
+                const { data, error } = await supabaseClient
+                    .from(tableName)
+                    .select('*');
+
+                if (error) {
+                    console.error(`Error fetching ${category} products:`, error);
+                    continue;
+                }
+
+                // Normalize the data to match expected format
+                const normalizedProducts = (data || []).map(product => ({
+                    ...product,
+                    category: category,
+                    id: product.id || product.product_id,
+                    name: product.name || product.product_name,
+                    price: product.price || product.product_price,
+                    originalPrice: product.original_price || product.price,
+                    rating: product.rating || 4.5,
+                    reviews: product.reviews || 0,
+                    description: product.description || '',
+                    image: product.image || product.image_url,
+                    specs: product.specs || {}
+                }));
+
+                allProducts.push(...normalizedProducts);
+            }
+        } else if (validCategories[filter]) {
+            // Fetch from specific category table
+            const tableName = validCategories[filter];
+            const { data, error } = await supabaseClient
+                .from(tableName)
+                .select('*');
+
+            if (error) {
+                throw error;
+            }
+
+            // Normalize the data
+            allProducts = (data || []).map(product => ({
+                ...product,
+                category: filter,
+                id: product.id || product.product_id,
+                name: product.name || product.product_name,
+                price: product.price || product.product_price,
+                originalPrice: product.original_price || product.price,
+                rating: product.rating || 4.5,
+                reviews: product.reviews || 0,
+                description: product.description || '',
+                image: product.image || product.image_url,
+                specs: product.specs || {}
+            }));
+        }
+
+        return allProducts;
+    } catch (error) {
+        console.error('Supabase fetch error:', error);
+        throw error;
+    }
+}
+
 async function fetchProducts(filter = 'all') {
     let data = null;
     const useApi = !window.location.hostname.includes('github.io') && !window.location.hostname.includes('localhost') && !window.location.protocol.startsWith('file');
@@ -97,11 +176,21 @@ async function fetchProducts(filter = 'all') {
         }
     }
 
+    // If on GitHub Pages or API failed, try Supabase directly
+    if (!data && supabaseClient) {
+        try {
+            data = await fetchProductsFromSupabase(filter);
+        } catch (supabaseError) {
+            console.error('Supabase fetch error:', supabaseError);
+        }
+    }
+
+    // Final fallback to local JSON
     if (!data) {
         try {
             // Construct correct path for GitHub Pages and local environments
-            const basePath = window.location.hostname.includes('github.io') 
-                ? '/Ink-lusiv/data/products.json' 
+            const basePath = window.location.hostname.includes('github.io')
+                ? '/Ink-lusiv/data/products.json'
                 : './data/products.json';
             const fallbackResponse = await fetch(basePath);
             if (fallbackResponse.ok) {
