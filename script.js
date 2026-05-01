@@ -197,24 +197,27 @@ async function fetchProducts(filter = 'all') {
     // Final fallback to local JSON
     if (!data) {
         try {
-                const scriptEl = document.querySelector('script[src*="script.js"]');
-                const scriptBase = scriptEl
-                    ? scriptEl.src.replace(/\/[^\/]*$/, '/')
-                    : `${window.location.origin}${window.location.pathname.replace(/\/[^\/]*$/, '/')}`;
-                const pageBase = `${window.location.origin}${window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname.replace(/\/[^\/]*$/, '/')}`;
-                const pathSegments = window.location.pathname.split('/').filter(Boolean);
-                const repoBase = pathSegments.length > 0
-                    ? `${window.location.origin}/${pathSegments[0]}/`
-                    : `${window.location.origin}/`;
+            const scriptEl = document.querySelector('script[src*="script.js"]');
+            const scriptBase = scriptEl
+                ? scriptEl.src.replace(/\/[^\/]*$/, '/')
+                : `${window.location.origin}${window.location.pathname.replace(/\/[^\/]*$/, '/')}`;
+            const pageBase = `${window.location.origin}${window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname.replace(/\/[^\/]*$/, '/')}`;
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            const repoBase = pathSegments.length > 0
+                ? `${window.location.origin}/${pathSegments[0]}/`
+                : `${window.location.origin}/`;
 
-                const fallbackPaths = Array.from(new Set([
-                    new URL('data/products.json', scriptBase).href,
-                    new URL('./data/products.json', pageBase).href,
-                    new URL('/data/products.json', window.location.origin).href,
-                    new URL('data/products.json', repoBase).href,
-                    new URL('../data/products.json', pageBase).href,
-                ]));
+            const fallbackPaths = Array.from(new Set([
+                new URL('data/products.json', scriptBase).href,
+                new URL('./data/products.json', pageBase).href,
+                new URL('/data/products.json', window.location.origin).href,
+                new URL('data/products.json', repoBase).href,
+                new URL('../data/products.json', pageBase).href,
+            ]));
 
+            let fallbackResponse = null;
+            for (const path of fallbackPaths) {
+                try {
                     fallbackResponse = await fetch(path);
                     if (fallbackResponse.ok) {
                         data = await fallbackResponse.json();
@@ -225,9 +228,21 @@ async function fetchProducts(filter = 'all') {
                     console.warn('Error fetching local product JSON path:', path, err);
                 }
             }
+
             if (!data) {
                 data = [];
             }
+        } catch (fallbackError) {
+            console.error(fallbackError);
+            showNotification('Unable to load products data.', 'error');
+            products = [];
+            currentFilter = filter;
+            currentPage = 1;
+            displayProducts();
+            return;
+        }
+    }
+
         } catch (fallbackError) {
             console.error(fallbackError);
             showNotification('Unable to load products data.', 'error');
