@@ -99,7 +99,11 @@ async function fetchProducts(filter = 'all') {
 
     if (!data) {
         try {
-            const fallbackResponse = await fetch('data/products.json');
+            // Construct correct path for GitHub Pages and local environments
+            const basePath = window.location.hostname.includes('github.io') 
+                ? '/Ink-lusiv/data/products.json' 
+                : './data/products.json';
+            const fallbackResponse = await fetch(basePath);
             if (fallbackResponse.ok) {
                 data = await fallbackResponse.json();
             }
