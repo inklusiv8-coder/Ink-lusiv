@@ -197,14 +197,24 @@ async function fetchProducts(filter = 'all') {
     // Final fallback to local JSON
     if (!data) {
         try {
-            // Construct a relative path for local JSON that works on GitHub Pages or local host
-            const fallbackPaths = [
-                new URL('./data/products.json', window.location.href).href,
-                `${window.location.origin}/Ink-lusiv/data/products.json`
-            ];
-            let fallbackResponse = null;
-            for (const path of fallbackPaths) {
-                try {
+                const scriptEl = document.querySelector('script[src*="script.js"]');
+                const scriptBase = scriptEl
+                    ? scriptEl.src.replace(/\/[^\/]*$/, '/')
+                    : `${window.location.origin}${window.location.pathname.replace(/\/[^\/]*$/, '/')}`;
+                const pageBase = `${window.location.origin}${window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname.replace(/\/[^\/]*$/, '/')}`;
+                const pathSegments = window.location.pathname.split('/').filter(Boolean);
+                const repoBase = pathSegments.length > 0
+                    ? `${window.location.origin}/${pathSegments[0]}/`
+                    : `${window.location.origin}/`;
+
+                const fallbackPaths = Array.from(new Set([
+                    new URL('data/products.json', scriptBase).href,
+                    new URL('./data/products.json', pageBase).href,
+                    new URL('/data/products.json', window.location.origin).href,
+                    new URL('data/products.json', repoBase).href,
+                    new URL('../data/products.json', pageBase).href,
+                ]));
+
                     fallbackResponse = await fetch(path);
                     if (fallbackResponse.ok) {
                         data = await fallbackResponse.json();
