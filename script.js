@@ -88,7 +88,6 @@ let products = [];
 
 async function fetchProducts(filter = 'all') {
     let data = null;
-    const useApi = !window.location.hostname.includes('github.io') && !window.location.protocol.startsWith('file');
 
     if (useApi) {
         try {
@@ -1062,9 +1061,40 @@ async function registerUser(userData) {
             body: JSON.stringify(userData)
         });
 
-        const data = await response.json();
-        if (!response.ok) {
-            showNotification(data.error || 'Registration failed.', 'error');
+        const contentType = response.headers.get('Content-Type') || '';
+        const isJson = contentType.includes('application/json');
+        let data = null;
+
+        if (isJson) {
+            data = await response.json();
+        }
+
+        if (!response.ok || !isJson) {
+            if (response.status === 405 || !isJson) {
+                const savedUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+                if (savedUsers.some(user => user.email === userData.email)) {
+                    showNotification('This email is already registered.', 'error');
+                    return false;
+                }
+
+                const newUser = {
+                    id: Date.now().toString(),
+                    fullName: userData.fullName,
+                    email: userData.email,
+                    phoneNumber: userData.phoneNumber,
+                    address: userData.address,
+                    city: userData.city,
+                    zipCode: userData.zipCode,
+                    password: userData.password,
+                    createdAt: new Date().toISOString()
+                };
+
+                savedUsers.push(newUser);
+                localStorage.setItem('localUsers', JSON.stringify(savedUsers));
+                return newUser;
+            }
+
+            showNotification((data && data.error) || 'Registration failed.', 'error');
             return false;
         }
 
@@ -1097,9 +1127,27 @@ async function loginUser(email, password) {
             body: JSON.stringify({ email, password })
         });
 
-        const data = await response.json();
-        if (!response.ok) {
-            showNotification(data.error || 'Login failed.', 'error');
+        const contentType = response.headers.get('Content-Type') || '';
+        const isJson = contentType.includes('application/json');
+        let data = null;
+
+        if (isJson) {
+            data = await response.json();
+        }
+
+        if (!response.ok || !isJson) {
+            if (response.status === 405 || !isJson) {
+                const savedUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+                const user = savedUsers.find(u => u.email === email && u.password === password);
+                if (!user) {
+                    showNotification('Login failed. Please check your email and password.', 'error');
+                    return false;
+                }
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                return true;
+            }
+
+            showNotification((data && data.error) || 'Login failed.', 'error');
             return false;
         }
 
