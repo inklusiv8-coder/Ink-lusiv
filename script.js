@@ -104,24 +104,14 @@ async function fetchProducts(filter = 'all') {
         // Final fallback to local JSON
     if (!data) {
         try {
-            const scriptEl = document.querySelector('script[src*="script.js"]');
-            const scriptBase = scriptEl
-                ? scriptEl.src.replace(/\/[^\/]*$/, '/')
-                : `${window.location.origin}${window.location.pathname.replace(/\/[^\/]*$/, '/')}`;
-            const pageBase = `${window.location.origin}${window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname.replace(/\/[^\/]*$/, '/')}`;
-            const pathSegments = window.location.pathname.split('/').filter(Boolean);
-            const repoBase = pathSegments.length > 0
-                ? `${window.location.origin}/${pathSegments[0]}/`
-                : `${window.location.origin}/`;
-
-            const fallbackPaths = Array.from(new Set([
-                new URL('data/products.json', scriptBase).href,
-                new URL('./data/products.json', pageBase).href,
-                new URL('/data/products.json', window.location.origin).href,
-                new URL('data/products.json', repoBase).href,
-                new URL('../data/products.json', pageBase).href,
-                'https://raw.githubusercontent.com/inklusiv8-coder/Ink-lusiv/main/data/products.json',
-            ]));
+            const fallbackPaths = [
+                '/api/products',
+                '/products.json',
+                './products.json',
+                'products.json',
+                './data/products.json',
+                'data/products.json',
+            ];
 
             let fallbackResponse = null;
             for (let i = 0; i < fallbackPaths.length && !data; i++) {
@@ -131,10 +121,10 @@ async function fetchProducts(filter = 'all') {
                     if (fallbackResponse.ok) {
                         data = await fallbackResponse.json();
                     } else {
-                        console.warn('Local product JSON fetch failed:', fallbackResponse.status, fallbackResponse.statusText, 'path:', path);
+                        console.warn('Product fetch failed:', fallbackResponse.status, fallbackResponse.statusText, 'path:', path);
                     }
                 } catch (err) {
-                    console.warn('Error fetching local product JSON path:', path, err);
+                    console.warn('Error fetching products from path:', path, err);
                 }
             }
 
