@@ -216,14 +216,15 @@ async function fetchProducts(filter = 'all') {
             ]));
 
             let fallbackResponse = null;
-            for (const path of fallbackPaths) {
+            for (let i = 0; i < fallbackPaths.length && !data; i++) {
+                const path = fallbackPaths[i];
                 try {
                     fallbackResponse = await fetch(path);
                     if (fallbackResponse.ok) {
                         data = await fallbackResponse.json();
-                        break;
+                    } else {
+                        console.warn('Local product JSON fetch failed:', fallbackResponse.status, fallbackResponse.statusText, 'path:', path);
                     }
-                    console.warn('Local product JSON fetch failed:', fallbackResponse.status, fallbackResponse.statusText, 'path:', path);
                 } catch (err) {
                     console.warn('Error fetching local product JSON path:', path, err);
                 }
