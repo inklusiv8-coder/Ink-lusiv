@@ -204,6 +204,9 @@ async function fetchProducts(filter = 'all') {
             const fallbackResponse = await fetch(basePath);
             if (fallbackResponse.ok) {
                 data = await fallbackResponse.json();
+            } else {
+                console.warn('Local product JSON fetch failed:', fallbackResponse.status, fallbackResponse.statusText);
+                data = [];
             }
         } catch (fallbackError) {
             console.error(fallbackError);
@@ -214,6 +217,10 @@ async function fetchProducts(filter = 'all') {
             displayProducts();
             return;
         }
+    }
+
+    if (!data) {
+        data = [];
     }
 
     products = Array.isArray(data)
