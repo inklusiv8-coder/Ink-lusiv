@@ -243,17 +243,6 @@ async function fetchProducts(filter = 'all') {
         }
     }
 
-        } catch (fallbackError) {
-            console.error(fallbackError);
-            showNotification('Unable to load products data.', 'error');
-            products = [];
-            currentFilter = filter;
-            currentPage = 1;
-            displayProducts();
-            return;
-        }
-    }
-
     if (!data) {
         data = [];
     }
