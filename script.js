@@ -1,5 +1,7 @@
 // ================== Supabase Configuration ==================
 const SUPABASE_URL = 'https://tkjwwtwtjatcbdxvwwzu.supabase.co';
+// Use a valid Supabase anon/public key if you want browser-side fallback.
+// Otherwise the backend route /api/products will be used on localhost or a server host.
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmand3dHd0amF0Y2JkeHZ3d3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDY4MDAsImV4cCI6MjA5Mjk4MjgwMH0.YHq7dXiiJNJrbm1m2FRtKzgqnQeT-OFci6I7dC2mwbs';
 
 const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -163,20 +165,22 @@ async function fetchProductsFromSupabase(filter = 'all') {
 
 async function fetchProducts(filter = 'all') {
     let data = null;
-    const useApi = !window.location.hostname.includes('github.io') && !window.location.hostname.includes('localhost') && !window.location.protocol.startsWith('file');
+    const useApi = !window.location.hostname.includes('github.io') && !window.location.protocol.startsWith('file');
 
     if (useApi) {
         try {
             const response = await fetch(`/api/products?category=${encodeURIComponent(filter)}`);
             if (response.ok) {
                 data = await response.json();
+            } else {
+                console.warn('Backend API returned non-ok status:', response.status);
             }
         } catch (error) {
-            // ignore and fall back to local data
+            console.warn('Backend API unavailable, falling back to Supabase/local JSON:', error);
         }
     }
 
-    // If on GitHub Pages or API failed, try Supabase directly
+    // If API failed or is unavailable, try Supabase directly as a fallback
     if (!data && supabaseClient) {
         try {
             data = await fetchProductsFromSupabase(filter);
