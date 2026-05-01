@@ -355,21 +355,6 @@ def admin_static(path):
     abort(404)
 
 
-@app.route('/<path:path>')
-def static_proxy(path):
-    if path.startswith('api/'):
-        abort(404)
-
-    if os.path.isdir(path):
-        index_path = os.path.join(path, 'index.html')
-        if os.path.exists(index_path):
-            return send_from_directory('.', index_path)
-
-    if os.path.exists(path):
-        return send_from_directory('.', path)
-    return send_from_directory('.', 'index.html')
-
-
 @app.route('/api/products', methods=['GET'])
 def get_products():
     category = request.args.get('category', 'all').strip().lower()
@@ -694,6 +679,21 @@ def update_bank_transfer(transfer_id):
     transfer['status'] = new_status
     save_json(BANK_TRANSFERS_FILE, transfers)
     return jsonify({'transfer': transfer})
+
+
+@app.route('/<path:path>')
+def static_proxy(path):
+    if path.startswith('api/'):
+        abort(404)
+
+    if os.path.isdir(path):
+        index_path = os.path.join(path, 'index.html')
+        if os.path.exists(index_path):
+            return send_from_directory('.', index_path)
+
+    if os.path.exists(path):
+        return send_from_directory('.', path)
+    return send_from_directory('.', 'index.html')
 
 
 if __name__ == '__main__':
