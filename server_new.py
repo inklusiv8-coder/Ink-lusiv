@@ -1,5 +1,5 @@
 """
-E-commerce Server with Supabase Integration
+E-commerce server using local JSON storage.
 Organized and well-structured Flask application for managing products, orders, and bank transfers.
 """
 
@@ -24,48 +24,8 @@ try:
 except ImportError:
     pass
 
-# Supabase configuration
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
-SUPABASE_PUBLIC_KEY = os.getenv('SUPABASE_KEY')
-supabase = None
-supabase_is_service_role = False
-
-def initialize_supabase():
-    """Initialize Supabase client with appropriate permissions."""
-    global supabase, supabase_is_service_role
-
-    if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
-        try:
-            from supabase import create_client
-            supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-            supabase_is_service_role = True
-            print(f"✅ Supabase client initialized: {SUPABASE_URL}")
-            print('🔑 Using SUPABASE_SERVICE_ROLE_KEY for full backend sync.')
-        except Exception as e:
-            print('❌ Could not initialize Supabase client with service role key:', e)
-            supabase = None
-    elif SUPABASE_URL and SUPABASE_PUBLIC_KEY:
-        try:
-            from supabase import create_client
-            supabase = create_client(SUPABASE_URL, SUPABASE_PUBLIC_KEY)
-            print(f"✅ Supabase client initialized: {SUPABASE_URL}")
-            print('🔒 Using SUPABASE_KEY for readonly access only. Backend writes disabled.')
-        except Exception as e:
-            print('❌ Could not initialize Supabase client with public key:', e)
-            supabase = None
-    else:
-        print('⚠️  Supabase configuration incomplete:')
-        if not SUPABASE_URL:
-            print('   - SUPABASE_URL is missing')
-        if not SUPABASE_SERVICE_ROLE_KEY and not SUPABASE_PUBLIC_KEY:
-            print('   - Supabase key is missing')
-        elif not SUPABASE_SERVICE_ROLE_KEY:
-            print('   - SUPABASE_SERVICE_ROLE_KEY missing (server-side operations disabled)')
-        print('📁 Using local JSON files for data storage.')
-
-# Initialize Supabase
-initialize_supabase()
+# Supabase integration has been removed.
+# This server now uses local JSON files for products, users, orders, and bank transfers.
 
 # File system setup
 BASE_DIR = os.path.dirname(__file__)
@@ -239,208 +199,8 @@ def send_order_confirmation_email(order, user_info):
     send_email(ADMIN_EMAIL, f"New Order Accepted - {order['id'][:8]}", html_content)
 
 
-# =============================================================================
-# SUPABASE SYNC FUNCTIONS
-# =============================================================================
-
-def sync_supabase_user(user):
-    """Sync user data to Supabase."""
-    if not supabase or not supabase_is_service_role:
-        return
-
-    try:
-        supabase.table('users').insert({
-            'id': user['id'],
-            'full_name': user['fullName'],
-            'email': user['email'],
-            'phone_number': user['phoneNumber'],
-            'address': user['address'],
-            'city': user['city'],
-            'zip_code': user['zipCode'],
-            'created_at': user['createdAt']
-        }).execute()
-        print(f'✅ User {user.get("email")} synced to Supabase')
-    except Exception:
-        pass  # Silently fail - local JSON storage is primary
-
-
-def sync_supabase_order(order):
-    """Sync order data to Supabase."""
-    if not supabase or not supabase_is_service_role:
-        print('⚠️  Supabase service role client missing: cannot sync order')
-        return
-
-    try:
-        response = supabase.table('orders').insert({
-            'id': order['id'],
-            'cart': order['cart'],
-            'billing': order['billing'],
-            'payment_method': order['paymentMethod'],
-            'status': order['status'],
-            'subtotal': order['subtotal'],
-            'shipping': order['shipping'],
-            'tax': order['tax'],
-            'total': order['total'],
-            'created_at': order['createdAt']
-        }).execute()
-
-        if getattr(response, 'error', None):
-            print('❌ Supabase order sync error:', response.error)
-        else:
-            print('✅ Supabase order synced successfully')
-    except Exception as e:
-        print('❌ Supabase order sync exception:', e)
-
-
-def sync_supabase_bank_transfer(transfer):
-    """Sync bank transfer data to Supabase."""
-    if not supabase or not supabase_is_service_role:
-        print('⚠️  Supabase service role client missing: cannot sync bank transfer')
-        return
-
-    try:
-        response = supabase.table('bank_transfers').insert({
-            'id': transfer['id'],
-            'cart': transfer['cart'],
-            'billing': transfer['billing'],
-            'status': transfer['status'],
-            'subtotal': transfer['subtotal'],
-            'shipping': transfer['shipping'],
-            'tax': transfer['tax'],
-            'total': transfer['total'],
-            'created_at': transfer['createdAt']
-        }).execute()
-
-        if getattr(response, 'error', None):
-            print('❌ Supabase bank transfer sync error:', response.error)
-        else:
-            print('✅ Supabase bank transfer synced successfully')
-    except Exception as e:
-        print('❌ Supabase bank transfer sync exception:', e)
-
-# =============================================================================
-# DATA NORMALIZATION FUNCTIONS
-# =============================================================================
-
-def normalize_supabase_product(record):
-    """Normalize Supabase product record to match local format."""
-    if not isinstance(record, dict):
-        return record
-
-    normalized = dict(record)
-    if 'original_price' in normalized:
-        normalized['originalPrice'] = normalized.pop('original_price')
-    if 'created_at' in normalized:
-        normalized['createdAt'] = normalized.pop('created_at')
-    return normalized
-
-
-def normalize_supabase_order(record):
-    """Normalize Supabase order record to match local format."""
-    if not isinstance(record, dict):
-        return record
-
-    normalized = dict(record)
-    if 'payment_method' in normalized:
-        normalized['paymentMethod'] = normalized.pop('payment_method')
-    if 'created_at' in normalized:
-        normalized['createdAt'] = normalized.pop('created_at')
-    return normalized
-
-
-def normalize_supabase_bank_transfer(record):
-    """Normalize Supabase bank transfer record to match local format."""
-    if not isinstance(record, dict):
-        return record
-
-    normalized = dict(record)
-    if 'created_at' in normalized:
-        normalized['createdAt'] = normalized.pop('created_at')
-    return normalized
-
-# =============================================================================
-# DATA FETCHING FUNCTIONS
-# =============================================================================
-
-def get_supabase_products(category='all'):
-    """Fetch products from Supabase with fallback to local file."""
-    if not supabase:
-        print('📁 Using local products file (Supabase not available)')
-        return load_json(PRODUCTS_FILE, [])
-
-    try:
-        print('🔄 Fetching products from Supabase')
-        query = supabase.table('products').select('*')
-        if category != 'all':
-            query = query.eq('category', category)
-
-        response = query.execute()
-        if getattr(response, 'data', None):
-            products = [normalize_supabase_product(record) for record in response.data]
-            print(f'✅ Supabase products: {len(products)}')
-            return products
-        else:
-            print('⚠️  Supabase returned no products data')
-            return load_json(PRODUCTS_FILE, [])
-    except Exception as e:
-        print('❌ Error fetching products from Supabase:', e)
-        return load_json(PRODUCTS_FILE, [])
-
-
-def get_supabase_orders():
-    """Fetch orders from Supabase with fallback to local file."""
-    if not supabase:
-        print('📁 Using local orders file (Supabase not available)')
-        return load_json(ORDERS_FILE, [])
-
-    try:
-        print('🔄 Fetching orders from Supabase')
-        response = supabase.table('orders').select('*').execute()
-
-        response_error = getattr(response, 'error', None) or (response.get('error') if isinstance(response, dict) else None)
-        response_data = getattr(response, 'data', None) or (response.get('data') if isinstance(response, dict) else None)
-
-        if response_error:
-            print('❌ Supabase orders fetch error:', response_error)
-            return load_json(ORDERS_FILE, [])
-        elif response_data is not None:
-            orders = [normalize_supabase_order(record) for record in (response_data or [])]
-            print(f'✅ Supabase orders: {len(orders)}')
-            return orders
-        else:
-            print('⚠️  Supabase orders response contained no data')
-            return load_json(ORDERS_FILE, [])
-    except Exception as e:
-        print('❌ Supabase orders fetch exception:', e)
-        return load_json(ORDERS_FILE, [])
-
-
-def get_supabase_bank_transfers():
-    """Fetch bank transfers from Supabase with fallback to local file."""
-    if not supabase:
-        print('📁 Using local bank transfers file (Supabase not available)')
-        return load_json(BANK_TRANSFERS_FILE, [])
-
-    try:
-        print('🔄 Fetching bank transfers from Supabase')
-        response = supabase.table('bank_transfers').select('*').execute()
-
-        response_error = getattr(response, 'error', None) or (response.get('error') if isinstance(response, dict) else None)
-        response_data = getattr(response, 'data', None) or (response.get('data') if isinstance(response, dict) else None)
-
-        if response_error:
-            print('❌ Supabase bank transfers fetch error:', response_error)
-            return load_json(BANK_TRANSFERS_FILE, [])
-        elif response_data is not None:
-            transfers = [normalize_supabase_bank_transfer(record) for record in (response_data or [])]
-            print(f'✅ Supabase bank transfers: {len(transfers)}')
-            return transfers
-        else:
-            print('⚠️  Supabase bank transfers response contained no data')
-            return load_json(BANK_TRANSFERS_FILE, [])
-    except Exception as e:
-        print('❌ Supabase bank transfers fetch exception:', e)
-        return load_json(BANK_TRANSFERS_FILE, [])
+# Supabase integration has been removed from this file.
+# The server now uses local JSON files for all data storage and retrieval.
 
 
 # =============================================================================
@@ -475,7 +235,9 @@ def serve_static(path):
 def get_products():
     """Get products, optionally filtered by category."""
     category = request.args.get('category', 'all')
-    products = get_supabase_products(category)
+    products = load_json(PRODUCTS_FILE, []) or []
+    if category and category.lower() != 'all':
+        products = [product for product in products if str(product.get('category', '')).lower() == category.lower()]
     return jsonify({'products': products})
 
 # USERS API
@@ -494,11 +256,6 @@ def create_user():
     users = load_json(USERS_FILE, [])
     users.append(user)
     save_json(USERS_FILE, users)
-
-    try:
-        sync_supabase_user(user)
-    except Exception:
-        pass  # Continue even if Supabase sync fails
 
     # Send welcome email
     send_welcome_email(user)
@@ -540,11 +297,6 @@ def create_order():
     orders.append(order)
     save_json(ORDERS_FILE, orders)
 
-    try:
-        sync_supabase_order(order)
-    except Exception:
-        pass  # Continue even if Supabase sync fails
-
     return jsonify({'order': order}), 201
 
 
@@ -552,7 +304,7 @@ def create_order():
 def get_orders():
     """Get all orders."""
     print('📋 GET /api/orders called')
-    orders = get_supabase_orders()
+    orders = load_json(ORDERS_FILE, []) or []
     return jsonify({'orders': orders})
 
 
@@ -599,14 +351,6 @@ def update_order(order_id):
                 }
             send_order_confirmation_email(order, user)
 
-    # Also update in Supabase if possible
-    if supabase and supabase_is_service_role:
-        try:
-            supabase.table('orders').update({'status': new_status}).eq('id', order_id).execute()
-            print('✅ Order status updated in Supabase')
-        except Exception as e:
-            print('❌ Supabase order update error:', e)
-
     return jsonify({'order': order})
 
 # BANK TRANSFERS API
@@ -642,11 +386,6 @@ def create_bank_transfer():
     transfers.append(transfer)
     save_json(BANK_TRANSFERS_FILE, transfers)
 
-    try:
-        sync_supabase_bank_transfer(transfer)
-    except Exception:
-        pass  # Continue even if Supabase sync fails
-
     return jsonify({'transfer': transfer}), 201
 
 
@@ -654,7 +393,7 @@ def create_bank_transfer():
 def get_bank_transfers():
     """Get all bank transfers."""
     print('🏦 GET /api/bank-transfers called')
-    transfers = get_supabase_bank_transfers()
+    transfers = load_json(BANK_TRANSFERS_FILE, []) or []
     return jsonify({'transfers': transfers})
 
 
@@ -675,14 +414,6 @@ def update_bank_transfer(transfer_id):
     transfer['status'] = new_status
     save_json(BANK_TRANSFERS_FILE, transfers)
 
-    # Also update in Supabase if possible
-    if supabase and supabase_is_service_role:
-        try:
-            supabase.table('bank_transfers').update({'status': new_status}).eq('id', transfer_id).execute()
-            print('✅ Bank transfer status updated in Supabase')
-        except Exception as e:
-            print('❌ Supabase bank transfer update error:', e)
-
     return jsonify({'transfer': transfer})
 
 # =============================================================================
@@ -691,10 +422,6 @@ def update_bank_transfer(transfer_id):
 
 if __name__ == '__main__':
     print('🚀 Starting E-commerce Server...')
-    print('📊 Data sources:')
-    if supabase:
-        print('   ✅ Supabase connected')
-    else:
-        print('   📁 Using local JSON files only')
+    print(' Using local JSON files only')
     print('🌐 Server will be available at http://127.0.0.1:5000')
     app.run(debug=True)

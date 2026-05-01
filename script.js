@@ -1,13 +1,4 @@
-// ================== Supabase Configuration ==================
-const SUPABASE_URL = 'https://tkjwwtwtjatcbdxvwwzu.supabase.co';
-// Use a valid Supabase anon/public key only if you want browser-side fallback.
-// Otherwise the backend route /api/products will be used on localhost or a server host.
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmand3dHd0amF0Y2JkeHZ3d3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDY4MDAsImV4cCI6MjA5Mjk4MjgwMH0.YHq7dXiiJNJrbm1m2FRtKzgqnQeT-OFci6I7dC2mwbs';
-const SUPABASE_FALLBACK_ENABLED = false;
-
-const supabaseClient = SUPABASE_FALLBACK_ENABLED && window.supabase
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
+// Local data configuration only.
 
 // ================== Hero Advert Carousel ==================
 const carouselImages = [
@@ -93,79 +84,6 @@ function updateChatIndicator() {
 // ================== Product Data ==================
 let products = [];
 
-async function fetchProductsFromSupabase(filter = 'all') {
-    if (!supabaseClient) {
-        throw new Error('Supabase client not available');
-    }
-
-    const validCategories = { 'leather': 'products_leather', 'metal': 'products_metal', 'silicone': 'products_silicone' };
-
-    try {
-        let allProducts = [];
-
-        if (filter === 'all') {
-            // Fetch from all three tables
-            for (const [category, tableName] of Object.entries(validCategories)) {
-                const { data, error } = await supabaseClient
-                    .from(tableName)
-                    .select('*');
-
-                if (error) {
-                    console.error(`Error fetching ${category} products:`, error);
-                    continue;
-                }
-
-                // Normalize the data to match expected format
-                const normalizedProducts = (data || []).map(product => ({
-                    ...product,
-                    category: category,
-                    id: product.id || product.product_id,
-                    name: product.name || product.product_name,
-                    price: product.price || product.product_price,
-                    originalPrice: product.original_price || product.price,
-                    rating: product.rating || 4.5,
-                    reviews: product.reviews || 0,
-                    description: product.description || '',
-                    image: product.image || product.image_url,
-                    specs: product.specs || {}
-                }));
-
-                allProducts.push(...normalizedProducts);
-            }
-        } else if (validCategories[filter]) {
-            // Fetch from specific category table
-            const tableName = validCategories[filter];
-            const { data, error } = await supabaseClient
-                .from(tableName)
-                .select('*');
-
-            if (error) {
-                throw error;
-            }
-
-            // Normalize the data
-            allProducts = (data || []).map(product => ({
-                ...product,
-                category: filter,
-                id: product.id || product.product_id,
-                name: product.name || product.product_name,
-                price: product.price || product.product_price,
-                originalPrice: product.original_price || product.price,
-                rating: product.rating || 4.5,
-                reviews: product.reviews || 0,
-                description: product.description || '',
-                image: product.image || product.image_url,
-                specs: product.specs || {}
-            }));
-        }
-
-        return allProducts;
-    } catch (error) {
-        console.error('Supabase fetch error:', error);
-        throw error;
-    }
-}
-
 async function fetchProducts(filter = 'all') {
     let data = null;
     const useApi = !window.location.hostname.includes('github.io') && !window.location.protocol.startsWith('file');
@@ -179,22 +97,11 @@ async function fetchProducts(filter = 'all') {
                 console.warn('Backend API returned non-ok status:', response.status);
             }
         } catch (error) {
-            console.warn('Backend API unavailable, falling back to Supabase/local JSON:', error);
+            console.warn('Backend API unavailable, falling back to local JSON:', error);
         }
     }
 
-    // If API failed or is unavailable, optionally try Supabase directly as a fallback
-    if (!data && SUPABASE_FALLBACK_ENABLED && supabaseClient) {
-        try {
-            data = await fetchProductsFromSupabase(filter);
-        } catch (supabaseError) {
-            console.error('Supabase fetch error:', supabaseError);
-        }
-    } else if (!data && !useApi && !SUPABASE_FALLBACK_ENABLED) {
-        console.info('Skipping direct Supabase fallback; using local JSON fallback instead.');
-    }
-
-    // Final fallback to local JSON
+        // Final fallback to local JSON
     if (!data) {
         try {
             const scriptEl = document.querySelector('script[src*="script.js"]');
@@ -545,29 +452,37 @@ function displayProducts(filter = currentFilter) {
     currentFilter = filter;
     
     const filteredProducts = filter === 'all' 
-        ? products 
+        ? products
         : products.filter(p => p.category === filter);
     
     const maxItems = currentPage * productsPerPage;
     const visibleProducts = filteredProducts.slice(0, maxItems);
     const hasMore = filteredProducts.length > visibleProducts.length;
 
-    productsGrid.innerHTML = visibleProducts.map(product => `
-        <div class="product-card" onclick="openProductModal(${product.id})">
+    productsGrid.innerHTML = visibleProducts.map(product => {
+        const status = product.status || 'available';
+        const isAvailable = status === 'available';
+        return `
+        <div class="product-card ${!isAvailable ? 'unavailable' : ''}" onclick="${isAvailable ? `openProductModal('${product.id}')` : ''}">
             <div class="product-image">
                 <img src="${product.image}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                ${!isAvailable ? `<div class="status-overlay">${status.replace('_', ' ').toUpperCase()}</div>` : ''}
             </div>
             <div class="product-body">
                 <div class="product-category">${product.category.toUpperCase()}</div>
                 <h3 class="product-name">${product.name}</h3>
                 <div class="product-rating">
-                    <span class="stars">${'★'.repeat(Math.floor(product.rating))}${'☆'.repeat(5 - Math.floor(product.rating))}</span>
-                    <span style="color: #999; font-size: 0.9rem;">(${product.reviews})</span>
+                    <span class="stars">${'★'.repeat(Math.floor(product.rating || 0))}${'☆'.repeat(5 - Math.floor(product.rating || 0))}</span>
+                    ${product.reviews ? `<span style="color: #999; font-size: 0.9rem;">(${product.reviews})</span>` : ''}
+                </div>
+                <div class="product-status">
+                    <span class="status-badge ${status}">${status.replace('_', ' ').toUpperCase()}</span>
+                    <span class="stock-info">${product.stock !== undefined ? `Stock: ${product.stock}` : 'Stock: N/A'}</span>
                 </div>
                 <div class="product-price">
                     <div>
                         <span class="price">$${product.price.toFixed(2)}</span>
-                        ${product.originalPrice > product.price ? `
+                        ${product.originalPrice && product.originalPrice > product.price ? `
                             <div>
                                 <span class="original-price">$${product.originalPrice.toFixed(2)}</span>
                                 <span class="discount">-${Math.round((1 - product.price/product.originalPrice) * 100)}%</span>
@@ -575,12 +490,12 @@ function displayProducts(filter = currentFilter) {
                         ` : ''}
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="event.stopPropagation(); addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})">
-                    Add to Cart
+                <button class="btn btn-primary" ${!isAvailable ? 'disabled' : ''} onclick="event.stopPropagation(); ${isAvailable ? `addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})` : ''}">
+                    ${isAvailable ? 'Add to Cart' : status.replace('_', ' ').toUpperCase()}
                 </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 
     if (viewMoreBtn) {
         viewMoreBtn.style.display = hasMore ? 'inline-block' : 'none';
@@ -597,27 +512,50 @@ function loadMoreProducts() {
 let currentProductId = null;
 
 function openProductModal(productId) {
-    const product = products.find(p => p.id === productId);
+    // Convert to number if it's numeric, otherwise keep as string
+    const numericId = Number(productId);
+    const searchId = isNaN(numericId) ? productId : numericId;
+    
+    const product = products.find(p => p.id === searchId || p.id == productId);
+    
+    if (!product) {
+        console.error('Product not found:', productId);
+        return;
+    }
+    
     currentProductId = productId;
     
     const modal = document.getElementById('productModal');
     
     // Update product image
     const modalProductImage = document.getElementById('modalProductImage');
-    modalProductImage.innerHTML = `<img src="${product.image}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
+    modalProductImage.innerHTML = `<img src="${product.image || 'https://via.placeholder.com/400'}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
     
-    document.getElementById('modalProductName').textContent = product.name;
-    document.getElementById('modalProductPrice').textContent = `$${product.price.toFixed(2)}`;
-    document.getElementById('modalProductDescription').textContent = product.description;
-    document.getElementById('modalProductRating').innerHTML = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
-    document.getElementById('modalProductReviews').textContent = `${product.reviews} reviews`;
+    document.getElementById('modalProductName').textContent = product.name || 'Untitled Product';
+    document.getElementById('modalProductPrice').textContent = `$${(product.price || 0).toFixed(2)}`;
+    document.getElementById('modalProductDescription').textContent = product.description || 'No description available';
     
-    const specsHtml = Object.entries(product.specs).map(([key, value]) => `
-        <div class="spec-item">
-            <span>${key}:</span>
-            <span style="font-weight: bold;">${value}</span>
-        </div>
-    `).join('');
+    const rating = Math.floor(product.rating || 0);
+    document.getElementById('modalProductRating').innerHTML = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    
+    const reviews = product.reviews || 0;
+    document.getElementById('modalProductReviews').textContent = `${reviews} review${reviews !== 1 ? 's' : ''}`;
+    
+    const specs = product.specs || {};
+    let specsHtml = '';
+    
+    if (typeof specs === 'string') {
+        specsHtml = `<p style="color: #666;">${specs}</p>`;
+    } else if (Object.keys(specs).length > 0) {
+        specsHtml = Object.entries(specs).map(([key, value]) => `
+            <div class="spec-item">
+                <span>${key}:</span>
+                <span style="font-weight: bold;">${value}</span>
+            </div>
+        `).join('');
+    } else {
+        specsHtml = '<p style="color: #999;">No specifications available</p>';
+    }
     document.getElementById('modalProductSpecs').innerHTML = specsHtml;
     
     document.getElementById('quantityInput').value = 1;
