@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ink-lusiv. Bank Transfer</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-watch"></i>
+                <span>ink-lusiv.</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html#home" class="nav-link">Home</a></li>
+                <li><a href="index.html#products" class="nav-link">Products</a></li>
+                <li><a href="index.html#about" class="nav-link">About</a></li>
+                <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+                <li><a href="checkout.html" class="nav-link">Checkout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="checkout" id="bankTransferPage">
+        <h2>Bank Transfer</h2>
+        <div class="checkout-container">
+            <div class="checkout-form">
+                <h3>Bank Details</h3>
+                <div class="bank-details">
+                    <p><strong>Account Name:</strong> ink-lusiv. Limited</p>
+                    <p><strong>Account Number:</strong> 1234567890</p>
+                    <p><strong>Bank:</strong> First Bank</p>
+                    <p><strong>Payment Type:</strong> Bank Transfer</p>
+                </div>
+                <div class="payment-status" id="paymentStatusBox">
+                    <p>Status: <span id="paymentStatus">Pending</span></p>
+                    <p id="paymentInstruction">Your payment status will update once it has been confirmed.</p>
+                </div>
+                <button class="btn btn-secondary" id="bankBackBtn">Back to Shop</button>
+            </div>
+            <div class="checkout-summary">
+                <h3>Order Summary</h3>
+                <div id="bankOrderItems"></div>
+                <div class="checkout-totals">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="bankSubtotal">$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Shipping:</span>
+                        <span id="bankShipping">$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax:</span>
+                        <span id="bankTax">$0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="bankTotal">$0.00</span>
+                    </div>
+                </div>
+                <div class="checkout-billing-info">
+                    <h4>Billing Info</h4>
+                    <p><strong>Name:</strong> <span id="bankBillingName">-</span></p>
+                    <p><strong>Email:</strong> <span id="bankBillingEmail">-</span></p>
+                    <p><strong>Address:</strong> <span id="bankBillingAddress">-</span></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="bank-transfer.js"></script>
+</body>
+</html>
