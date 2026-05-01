@@ -1,8 +1,9 @@
 // ================== Supabase Configuration ==================
 const SUPABASE_URL = 'https://tkjwwtwtjatcbdxvwwzu.supabase.co';
-// Use a valid Supabase anon/public key if you want browser-side fallback.
+// Use a valid Supabase anon/public key only if you want browser-side fallback.
 // Otherwise the backend route /api/products will be used on localhost or a server host.
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmand3dHd0amF0Y2JkeHZ3d3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDY4MDAsImV4cCI6MjA5Mjk4MjgwMH0.YHq7dXiiJNJrbm1m2FRtKzgqnQeT-OFci6I7dC2mwbs';
+const SUPABASE_FALLBACK_ENABLED = false;
 
 const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
@@ -180,13 +181,15 @@ async function fetchProducts(filter = 'all') {
         }
     }
 
-    // If API failed or is unavailable, try Supabase directly as a fallback
-    if (!data && supabaseClient) {
+    // If API failed or is unavailable, optionally try Supabase directly as a fallback
+    if (!data && SUPABASE_FALLBACK_ENABLED && supabaseClient) {
         try {
             data = await fetchProductsFromSupabase(filter);
         } catch (supabaseError) {
             console.error('Supabase fetch error:', supabaseError);
         }
+    } else if (!data && !useApi && !SUPABASE_FALLBACK_ENABLED) {
+        console.info('Skipping direct Supabase fallback; using local JSON fallback instead.');
     }
 
     // Final fallback to local JSON
