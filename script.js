@@ -94,13 +94,28 @@ async function fetchProducts(filter = 'all') {
             : Array.isArray(data.products)
                 ? data.products
                 : [];
-        currentFilter = filter;
-        currentPage = 1;
-        displayProducts();
     } catch (error) {
-        console.error(error);
-        showNotification('Unable to load products from the backend.', 'error');
+        console.warn('API products fetch failed, falling back to local data:', error);
+        try {
+            const fallbackResponse = await fetch('data/products.json');
+            if (!fallbackResponse.ok) {
+                throw new Error('Failed to load local products data');
+            }
+            products = await fallbackResponse.json();
+        } catch (fallbackError) {
+            console.error(fallbackError);
+            showNotification('Unable to load products data.', 'error');
+            products = [];
+        }
     }
+
+    if (filter !== 'all') {
+        products = products.filter(product => String(product.category || '').toLowerCase() === filter.toLowerCase());
+    }
+
+    currentFilter = filter;
+    currentPage = 1;
+    displayProducts();
 }
 
 // ================== Cart Management ==================
