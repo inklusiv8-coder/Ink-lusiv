@@ -5,7 +5,9 @@ const SUPABASE_URL = 'https://tkjwwtwtjatcbdxvwwzu.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmand3dHd0amF0Y2JkeHZ3d3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDY4MDAsImV4cCI6MjA5Mjk4MjgwMH0.YHq7dXiiJNJrbm1m2FRtKzgqnQeT-OFci6I7dC2mwbs';
 const SUPABASE_FALLBACK_ENABLED = false;
 
-const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const supabaseClient = SUPABASE_FALLBACK_ENABLED && window.supabase
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
 
 // ================== Hero Advert Carousel ==================
 const carouselImages = [
