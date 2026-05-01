@@ -105,12 +105,10 @@ async function fetchProducts(filter = 'all') {
     if (!data) {
         try {
             const fallbackPaths = [
-                '/api/products',
-                '/products.json',
-                './products.json',
                 'products.json',
-                './data/products.json',
+                './products.json',
                 'data/products.json',
+                './data/products.json',
             ];
 
             let fallbackResponse = null;
