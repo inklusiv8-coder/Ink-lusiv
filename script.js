@@ -197,15 +197,25 @@ async function fetchProducts(filter = 'all') {
     // Final fallback to local JSON
     if (!data) {
         try {
-            // Construct correct path for GitHub Pages and local environments
-            const basePath = window.location.hostname.includes('github.io')
-                ? '/Ink-lusiv/data/products.json'
-                : './data/products.json';
-            const fallbackResponse = await fetch(basePath);
-            if (fallbackResponse.ok) {
-                data = await fallbackResponse.json();
-            } else {
-                console.warn('Local product JSON fetch failed:', fallbackResponse.status, fallbackResponse.statusText);
+            // Construct a relative path for local JSON that works on GitHub Pages or local host
+            const fallbackPaths = [
+                new URL('./data/products.json', window.location.href).href,
+                `${window.location.origin}/Ink-lusiv/data/products.json`
+            ];
+            let fallbackResponse = null;
+            for (const path of fallbackPaths) {
+                try {
+                    fallbackResponse = await fetch(path);
+                    if (fallbackResponse.ok) {
+                        data = await fallbackResponse.json();
+                        break;
+                    }
+                    console.warn('Local product JSON fetch failed:', fallbackResponse.status, fallbackResponse.statusText, 'path:', path);
+                } catch (err) {
+                    console.warn('Error fetching local product JSON path:', path, err);
+                }
+            }
+            if (!data) {
                 data = [];
             }
         } catch (fallbackError) {
