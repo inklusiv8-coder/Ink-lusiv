@@ -1,0 +1,177 @@
+[
+  {
+    "id": "cff9a881b2a9480cb3977637601c61f8",
+    "customerName": "Easymoney",
+    "customerEmail": "ayomideoluniyi49@gmail.com",
+    "customerPhone": "9893828",
+    "whatsappNumber": "9138154963",
+    "createdAt": "2026-04-30T18:18:28.659038+00:00",
+    "messages": [
+      {
+        "id": "f536b836833b4448b19c579aa58552e2",
+        "sender": "customer",
+        "text": "ds",
+        "timestamp": "2026-04-30T18:18:28.659038+00:00"
+      },
+      {
+        "id": "b1399c4e37ea48b4a33e8affa2d78cfd",
+        "sender": "customer",
+        "text": "ping",
+        "timestamp": "2026-04-30T23:32:08.394368+00:00"
+      },
+      {
+        "id": "c3c2eb421fb944e1a07588fdb773a62e",
+        "sender": "customer",
+        "text": "hello",
+        "timestamp": "2026-04-30T23:32:51.018045+00:00"
+      }
+    ],
+    "updatedAt": "2026-04-30T23:32:51.018066+00:00"
+  },
+  {
+    "id": "942ad0dd39134ed396b1e6959bbf9c80",
+    "customerName": "Easymoney",
+    "customerEmail": "ayomideoluniyi49@gmail.com",
+    "customerPhone": "9893828",
+    "whatsappNumber": "9138154963",
+    "createdAt": "2026-04-30T18:21:16.043864+00:00",
+    "messages": [
+      {
+        "id": "01b8efc6ffc142088e528460fc328ffb",
+        "sender": "customer",
+        "text": ",cx",
+        "timestamp": "2026-04-30T18:21:16.043864+00:00"
+      }
+    ]
+  },
+  {
+    "id": "10f36cf632654caf8ce2452040a78573",
+    "customerName": "Easymoney",
+    "customerEmail": "ayomideoluniyi49@gmail.com",
+    "customerPhone": "9893828",
+    "whatsappNumber": "9138154963",
+    "createdAt": "2026-04-30T18:22:27.543258+00:00",
+    "messages": [
+      {
+        "id": "0a2cfb63cd834d38aeade31fe20710a0",
+        "sender": "customer",
+        "text": "kdk",
+        "timestamp": "2026-04-30T18:22:27.543258+00:00"
+      }
+    ]
+  },
+  {
+    "id": "64114606887a465bbbdf6f14b97d258f",
+    "customerName": "Easymoney",
+    "customerEmail": "ayomideoluniyi49@gmail.com",
+    "customerPhone": "9893828",
+    "whatsappNumber": "9138154963",
+    "createdAt": "2026-04-30T18:22:51.512335+00:00",
+    "messages": [
+      {
+        "id": "f09d2d8e79c240e8932f3a042eee7439",
+        "sender": "customer",
+        "text": "dzl;d",
+        "timestamp": "2026-04-30T18:22:51.512335+00:00"
+      }
+    ]
+  },
+  {
+    "id": "e0c17dd4cd204b5ca6d94e45714ec9d8",
+    "customerName": "Easymoney",
+    "customerEmail": "ayomideoluniyi49@gmail.com",
+    "customerPhone": "9893828",
+    "whatsappNumber": "9138154963",
+    "createdAt": "2026-04-30T18:25:54.369355+00:00",
+    "messages": [
+      {
+        "id": "a2e8bc0836fd40d9b12136b45d49a2ee",
+        "sender": "customer",
+        "text": "l;cxl",
+        "timestamp": "2026-04-30T18:25:54.369355+00:00"
+      }
+    ]
+  },
+  {
+    "id": "300280770a494313b5dbbb7090aa9ae4",
+    "customerName": "Easymoney",
+    "customerEmail": "ayomideoluniyi49@gmail.com",
+    "customerPhone": "9893828",
+    "whatsappNumber": "9138154963",
+    "createdAt": "2026-04-30T18:29:37.872869+00:00",
+    "messages": [
+      {
+        "id": "c84287d726cc4ec3b00f4046c1f1e32d",
+        "sender": "customer",
+        "text": ";l;l",
+        "timestamp": "2026-04-30T18:29:37.872869+00:00"
+      }
+    ]
+  },
+  {
+    "id": "65249f90826540b893b9f17b22f85931",
+    "customerName": "Easymoney",
+    "customerEmail": "ayomideoluniyi49@gmail.com",
+    "customerPhone": "9893828",
+    "whatsappNumber": "9138154963",
+    "createdAt": "2026-04-30T22:01:44.976996+00:00",
+    "messages": [
+      {
+        "id": "ef38e2fbce0c473aafeaf0c0a6fd7b3b",
+        "sender": "customer",
+        "text": "hello",
+        "timestamp": "2026-04-30T22:01:44.976996+00:00"
+      }
+    ]
+  },
+  {
+    "id": "27100e52260f4da1b838ff77a7473686",
+    "customerName": "Easymoney",
+    "customerEmail": "ayomideoluniyi49@gmail.com",
+    "customerPhone": "9893828",
+    "whatsappNumber": "9138154963",
+    "createdAt": "2026-04-30T22:52:55.285658+00:00",
+    "messages": [
+      {
+        "id": "368be41714a54cb0898abe1b1c075944",
+        "sender": "customer",
+        "text": "hello",
+        "timestamp": "2026-04-30T22:52:55.285658+00:00"
+      }
+    ]
+  },
+  {
+    "id": "b0217ae0dfb445439b1eb285f7e25f1c",
+    "customerName": "Test User",
+    "customerEmail": "test@example.com",
+    "customerPhone": "1234567890",
+    "whatsappNumber": "9138154963",
+    "messages": [
+      {
+        "id": "3fdc197e8109480f8217109d827c4471",
+        "sender": "customer",
+        "text": "Hello from test",
+        "timestamp": "2026-04-30T23:29:49.644467+00:00"
+      }
+    ],
+    "createdAt": "2026-04-30T23:29:49.644447+00:00",
+    "updatedAt": "2026-04-30T23:29:49.644470+00:00"
+  },
+  {
+    "id": "32f1b12ea25f4b668553c0113036dfd9",
+    "customerName": "Guest",
+    "customerEmail": "",
+    "customerPhone": "",
+    "whatsappNumber": "9138154963",
+    "messages": [
+      {
+        "id": "a5299acc202046829c1b819b3d17cf32",
+        "sender": "customer",
+        "text": "Hello from guest",
+        "timestamp": "2026-04-30T23:30:35.774667+00:00"
+      }
+    ],
+    "createdAt": "2026-04-30T23:30:35.774644+00:00",
+    "updatedAt": "2026-04-30T23:30:35.774670+00:00"
+  }
+]

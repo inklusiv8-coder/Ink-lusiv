@@ -120,6 +120,7 @@ async function fetchProducts(filter = 'all') {
                 new URL('/data/products.json', window.location.origin).href,
                 new URL('data/products.json', repoBase).href,
                 new URL('../data/products.json', pageBase).href,
+                'https://raw.githubusercontent.com/inklusiv8-coder/Ink-lusiv/main/data/products.json',
             ]));
 
             let fallbackResponse = null;
