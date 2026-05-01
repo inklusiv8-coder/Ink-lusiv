@@ -83,31 +83,42 @@ function updateChatIndicator() {
 let products = [];
 
 async function fetchProducts(filter = 'all') {
-    try {
-        const response = await fetch(`/api/products?category=${encodeURIComponent(filter)}`);
-        if (!response.ok) {
-            throw new Error('Failed to load products');
+    let data = null;
+    const useApi = !window.location.hostname.includes('github.io') && !window.location.hostname.includes('localhost') && !window.location.protocol.startsWith('file');
+
+    if (useApi) {
+        try {
+            const response = await fetch(`/api/products?category=${encodeURIComponent(filter)}`);
+            if (response.ok) {
+                data = await response.json();
+            }
+        } catch (error) {
+            // ignore and fall back to local data
         }
-        const data = await response.json();
-        products = Array.isArray(data)
-            ? data
-            : Array.isArray(data.products)
-                ? data.products
-                : [];
-    } catch (error) {
-        console.warn('API products fetch failed, falling back to local data:', error);
+    }
+
+    if (!data) {
         try {
             const fallbackResponse = await fetch('data/products.json');
-            if (!fallbackResponse.ok) {
-                throw new Error('Failed to load local products data');
+            if (fallbackResponse.ok) {
+                data = await fallbackResponse.json();
             }
-            products = await fallbackResponse.json();
         } catch (fallbackError) {
             console.error(fallbackError);
             showNotification('Unable to load products data.', 'error');
             products = [];
+            currentFilter = filter;
+            currentPage = 1;
+            displayProducts();
+            return;
         }
     }
+
+    products = Array.isArray(data)
+        ? data
+        : Array.isArray(data.products)
+            ? data.products
+            : [];
 
     if (filter !== 'all') {
         products = products.filter(product => String(product.category || '').toLowerCase() === filter.toLowerCase());
