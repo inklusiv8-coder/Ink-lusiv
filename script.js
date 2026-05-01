@@ -1,5 +1,7 @@
 // Local data configuration only.
 
+const useApi = !window.location.hostname.includes('github.io') && !window.location.protocol.startsWith('file');
+
 // ================== Hero Advert Carousel ==================
 const carouselImages = [
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0XRWj0Xp3r4FF2VvQDLR3YGB0gyM5KqF-8Q&s',
@@ -1028,6 +1030,30 @@ async function registerUser(userData) {
     }
 
     try {
+        if (!useApi) {
+            const savedUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+            if (savedUsers.some(user => user.email === userData.email)) {
+                showNotification('This email is already registered.', 'error');
+                return false;
+            }
+
+            const newUser = {
+                id: Date.now().toString(),
+                fullName: userData.fullName,
+                email: userData.email,
+                phoneNumber: userData.phoneNumber,
+                address: userData.address,
+                city: userData.city,
+                zipCode: userData.zipCode,
+                password: userData.password,
+                createdAt: new Date().toISOString()
+            };
+
+            savedUsers.push(newUser);
+            localStorage.setItem('localUsers', JSON.stringify(savedUsers));
+            return newUser;
+        }
+
         const response = await fetch('/api/register', {
             method: 'POST',
             headers: {
@@ -1052,6 +1078,17 @@ async function registerUser(userData) {
 
 async function loginUser(email, password) {
     try {
+        if (!useApi) {
+            const savedUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+            const user = savedUsers.find(u => u.email === email && u.password === password);
+            if (!user) {
+                showNotification('Login failed. Please check your email and password.', 'error');
+                return false;
+            }
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            return true;
+        }
+
         const response = await fetch('/api/login', {
             method: 'POST',
             headers: {
