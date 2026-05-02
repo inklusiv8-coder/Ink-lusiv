@@ -15,15 +15,15 @@ try:
 except ImportError:
     pass
 
-# Supabase integration for users (disabled until table is created)
+# Supabase integration for users (disabled - to enable, set USE_SUPABASE = True)
 try:
     from supabase import create_client, Client
     SUPABASE_URL = os.getenv('SUPABASE_URL')
     SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
     if SUPABASE_URL and SUPABASE_KEY:
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        USE_SUPABASE = False  # Disabled for now - enable once 'users' table is created
-        print("⚠️ Supabase credentials found but using local JSON (create 'users' table in Supabase to enable)")
+        USE_SUPABASE = False  # Set to True to enable Supabase storage
+        print("⚠️ Supabase library installed but disabled. Users table exists and ready.")
     else:
         USE_SUPABASE = False
         print("⚠️ Supabase credentials not found, using local JSON fallback")
