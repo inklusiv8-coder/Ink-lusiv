@@ -35,6 +35,9 @@ EMAIL_SENDER = os.getenv('EMAIL_SENDER', 'inklusiv8@gmail.com')
 EMAIL_APP_PASSWORD = os.getenv('EMAIL_APP_PASSWORD', 'dzxt tugy xwhq lewd')
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'giripy123@gmail.com')
 
+# Deployment domain for email links and redirects
+APP_DOMAIN = os.getenv('APP_DOMAIN', 'https://ink-lusiv.onrender.com')
+
 BASE_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -188,7 +191,7 @@ def send_order_pending_email(order, user_email):
     admin_html += f"""
             </ul>
             <p style='font-size: 16px; line-height: 1.6; margin-top: 20px;'>
-                <a href='http://localhost:5000/admin/#orders' style='display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Review in Admin Panel</a>
+                <a href='{APP_DOMAIN}/admin/#orders' style='display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Review in Admin Panel</a>
             </p>
         </div>
     </body>
