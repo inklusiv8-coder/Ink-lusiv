@@ -1,8 +1,10 @@
 // Local data configuration only.
 
 const RENDER_API_HOST = 'https://ink-lusiv.onrender.com';
-const useApi = window.location.protocol !== 'file:';
-const apiBase = window.location.hostname.includes('github.io')
+const isLocalStaticServer = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+    && window.location.port !== '5000';
+const useApi = window.location.protocol !== 'file:' && !isLocalStaticServer;
+const apiBase = window.location.hostname.includes('github.io') || isLocalStaticServer
     ? RENDER_API_HOST
     : (useApi ? window.location.origin : RENDER_API_HOST);
 
@@ -18,7 +20,14 @@ let currentCarouselIndex = 0;
 
 function initCarousel() {
     const dotsContainer = document.getElementById('carouselDots');
-    
+    const hero = document.querySelector('.hero');
+    if (!dotsContainer || !hero) {
+        if (hero) {
+            setHeroBackground(carouselImages[0]);
+        }
+        return;
+    }
+
     // Create dots
     carouselImages.forEach((_, index) => {
         const dot = document.createElement('div');
@@ -40,7 +49,7 @@ function initCarousel() {
 function setHeroBackground(imageUrl) {
     const hero = document.querySelector('.hero');
     if (hero) {
-        hero.style.backgroundImage = `linear-gradient(135deg, rgba(245,241,232,0.35) 0%, rgba(232,220,200,0.25) 50%, rgba(212,165,116,0.2) 100%), url('${imageUrl}')`;
+        hero.style.backgroundImage = `linear-gradient(135deg, rgba(3, 16, 31, 0.88) 0%, rgba(7, 30, 53, 0.72) 50%, rgba(3, 18, 34, 0.92) 100%), url('${imageUrl}')`;
         hero.style.backgroundSize = 'cover';
         hero.style.backgroundPosition = 'center';
         hero.style.backgroundRepeat = 'no-repeat';
@@ -578,36 +587,49 @@ function setupModalControls() {
     const productModal = document.getElementById('productModal');
     const cartModal = document.getElementById('cartModal');
     const cartBtn = document.getElementById('cartBtn');
-    
+    const decreaseQty = document.getElementById('decreaseQty');
+    const increaseQty = document.getElementById('increaseQty');
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    const checkoutBtn = document.getElementById('checkoutButton');
+
+    if (!cartBtn || !cartModal) {
+        console.warn('Cart modal elements not found, skipping modal setup.');
+        return;
+    }
+
     cartBtn.onclick = function(e) {
         e.preventDefault();
         displayCart();
         cartModal.style.display = 'block';
     }
-    
-    // Quantity controls
-    document.getElementById('decreaseQty').onclick = function() {
-        const input = document.getElementById('quantityInput');
-        if (input.value > 1) {
-            input.value = parseInt(input.value) - 1;
+
+    if (decreaseQty) {
+        decreaseQty.onclick = function() {
+            const input = document.getElementById('quantityInput');
+            if (input && input.value > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
         }
     }
-    
-    document.getElementById('increaseQty').onclick = function() {
-        const input = document.getElementById('quantityInput');
-        input.value = parseInt(input.value) + 1;
+
+    if (increaseQty) {
+        increaseQty.onclick = function() {
+            const input = document.getElementById('quantityInput');
+            if (input) {
+                input.value = parseInt(input.value) + 1;
+            }
+        }
     }
-    
-    // Add to cart from modal
-    document.getElementById('addToCartBtn').onclick = function() {
-        const quantity = parseInt(document.getElementById('quantityInput').value);
-        const product = products.find(p => p.id === currentProductId);
-        addToCart(product, quantity);
-        productModal.style.display = 'none';
+
+    if (addToCartBtn && productModal) {
+        addToCartBtn.onclick = function() {
+            const quantity = parseInt(document.getElementById('quantityInput').value);
+            const product = products.find(p => p.id === currentProductId);
+            addToCart(product, quantity);
+            productModal.style.display = 'none';
+        }
     }
-    
-    // Checkout button in cart modal
-    const checkoutBtn = document.getElementById('checkoutButton');
+
     if (checkoutBtn) {
         checkoutBtn.onclick = function(e) {
             e.stopPropagation();
@@ -947,6 +969,10 @@ function setupAuthModals() {
     const registerModal = document.getElementById('registerModal');
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
+
+    if (!loginBtn || !registerBtn || !loginModal || !registerModal || !loginForm || !registerForm) {
+        return;
+    }
     
     // Open login modal
     loginBtn.onclick = function(e) {
@@ -962,16 +988,18 @@ function setupAuthModals() {
     
     // Close modals when clicking outside
     window.onclick = function(event) {
-        if (event.target === loginModal) {
+        if (loginModal && event.target === loginModal) {
             loginModal.style.display = 'none';
         }
-        if (event.target === registerModal) {
+        if (registerModal && event.target === registerModal) {
             registerModal.style.display = 'none';
         }
-        if (event.target === productModal) {
+        const productModal = document.getElementById('productModal');
+        const cartModal = document.getElementById('cartModal');
+        if (productModal && event.target === productModal) {
             productModal.style.display = 'none';
         }
-        if (event.target === cartModal) {
+        if (cartModal && event.target === cartModal) {
             cartModal.style.display = 'none';
         }
     }
@@ -1246,7 +1274,19 @@ function showNotification(message, type = 'success') {
 // ================== Initialization ==================
 document.addEventListener('DOMContentLoaded', async function() {
     initCarousel();
-    await fetchProducts();
+    const currentPath = window.location.pathname.toLowerCase();
+    const currentHref = window.location.href.toLowerCase();
+    let targetFilter = 'all';
+    if (currentPath.includes('leather.html') || currentHref.includes('leather.html')) {
+        targetFilter = 'leather';
+    } else if (currentPath.includes('metal.html') || currentHref.includes('metal.html')) {
+        targetFilter = 'metal';
+    } else if (currentPath.includes('silicone.html') || currentHref.includes('silicone.html')) {
+        targetFilter = 'silicone';
+    } else {
+        targetFilter = 'all';
+    }
+    await fetchProducts(targetFilter);
     setupFilterControls();
     const viewMoreBtn = document.getElementById('viewMoreBtn');
     if (viewMoreBtn) {

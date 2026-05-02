@@ -88,6 +88,19 @@ a {
     display: none;
 }
 
+.category-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin: 25px 0 10px;
+}
+
+.category-links .btn {
+    padding: 12px 20px;
+    min-width: 170px;
+}
+
 /* ================== Navigation ================== */
 .navbar {
     background-color: var(--dark-color);
@@ -122,14 +135,30 @@ a {
 .logo span {
     text-transform: none;
     white-space: nowrap;
+    background: linear-gradient(45deg, var(--primary-color), #ff6b6b, #4ecdc4, #45b7d1, var(--primary-color));
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 900;
+    letter-spacing: 1px;
+    animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .logo i {
     font-size: 1.2rem;
-}
-
-.logo i {
-    color: var(--primary-color);
+    background: linear-gradient(45deg, var(--primary-color), #ff6b6b, #4ecdc4, #45b7d1, var(--primary-color));
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease-in-out infinite;
 }
 
 .nav-menu {
@@ -232,7 +261,7 @@ a {
     margin: 0 auto;
     padding: 60px 20px;
     min-height: 700px;
-    background: #f5f1e8;
+    background: linear-gradient(180deg, #05131f 0%, #0a2742 45%, #081724 100%);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -243,25 +272,34 @@ a {
 .hero::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 1000px;
-    height: 1000px;
-    background: radial-gradient(circle, rgba(212, 165, 116, 0.15) 0%, transparent 70%);
+    top: -40%;
+    right: -40%;
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(circle, rgba(44, 150, 255, 0.18) 0%, transparent 58%);
     border-radius: 50%;
+    filter: blur(40px);
     animation: float 20s ease-in-out infinite;
 }
 
 .hero::after {
     content: '';
     position: absolute;
-    bottom: -30%;
-    left: -30%;
-    width: 800px;
-    height: 800px;
-    background: radial-gradient(circle, rgba(26, 26, 26, 0.05) 0%, transparent 70%);
+    bottom: -25%;
+    left: -20%;
+    width: 780px;
+    height: 780px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
     border-radius: 50%;
+    filter: blur(36px);
     animation: float 25s ease-in-out infinite reverse;
+}
+
+.hero::before,
+.hero::after {
+    mix-blend-mode: screen;
+}
+
 }
 
 @keyframes float {
@@ -282,12 +320,12 @@ a {
 
 .hero-content h1 {
     font-size: 4.5rem;
-    color: var(--dark-color);
+    color: #f8fbff;
     margin-bottom: 20px;
     line-height: 1.1;
     font-weight: 900;
     letter-spacing: -1px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
 .hero-content p {
@@ -296,6 +334,29 @@ a {
     margin-bottom: 40px;
     font-weight: 300;
     letter-spacing: 1px;
+}
+
+.page-section {
+    padding: 80px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-heading {
+    text-align: center;
+    color: #1a1a1a;
+    margin-bottom: 30px;
+}
+
+.page-heading h1 {
+    font-size: 3rem;
+    margin-bottom: 12px;
+}
+
+.page-heading p {
+    color: #555;
+    max-width: 720px;
+    margin: 0 auto;
 }
 
 .hero-image {
@@ -486,7 +547,8 @@ a {
 .product-image {
     width: 100%;
     height: 220px;
-    background: linear-gradient(135deg, #f5f1e8 0%, #e8dcc8 50%, #f5f1e8 100%);
+    background: radial-gradient(circle at top left, rgba(60, 155, 255, 0.14), transparent 24%),
+                linear-gradient(135deg, #071520 0%, #0f2740 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -494,20 +556,35 @@ a {
     position: relative;
 }
 
+.product-image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.06), transparent 42%);
+    pointer-events: none;
+}
+
 .product-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 90%;
+    height: auto;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
 }
 
 .product-card:hover .product-image {
-    transform: scale(1.15) rotate(5deg);
+    transform: scale(1.12) rotate(2deg);
+    background: radial-gradient(circle at top left, rgba(92, 184, 255, 0.16), transparent 26%),
+                linear-gradient(135deg, #06131f 0%, #0d2241 100%);
 }
 
 .product-body {
     padding: 25px;
-    background: linear-gradient(180deg, #ffffff 0%, #fdfbf7 100%);
+    background: linear-gradient(180deg, rgba(8, 20, 32, 0.95) 0%, rgba(10, 26, 45, 0.95) 100%);
+    color: #eef3ff;
 }
+
 
 .product-category {
     color: var(--primary-color);
@@ -522,7 +599,7 @@ a {
     font-size: 1.3rem;
     font-weight: 700;
     margin-bottom: 12px;
-    color: var(--dark-color);
+    color: #eef3ff;
     letter-spacing: -0.5px;
 }
 

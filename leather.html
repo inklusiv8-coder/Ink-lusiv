@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ink-lusiv. - Leather Watches</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-watch"></i>
+                <span>Inklusiv</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html#home" class="nav-link">Home</a></li>
+                <li><a href="all.html" class="nav-link">All</a></li>
+                <li><a href="leather.html" class="nav-link">Leather</a></li>
+                <li><a href="metal.html" class="nav-link">Metal</a></li>
+                <li><a href="silicone.html" class="nav-link">Silicone</a></li>
+                <li><a href="checkout.html" class="nav-link">Checkout</a></li>
+            </ul>
+            <div class="nav-icons">
+                <button class="cart-btn" id="cartBtn" aria-label="View cart" title="Cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="products page-section">
+        <div class="page-heading">
+            <h1>Leather Watches</h1>
+            <p>Browse our leather strap watches made for classic style.</p>
+        </div>
+        <div class="category-links">
+            <a href="all.html" class="btn btn-secondary">View All</a>
+            <a href="leather.html" class="btn btn-secondary">Leather</a>
+            <a href="metal.html" class="btn btn-secondary">Metal</a>
+            <a href="silicone.html" class="btn btn-secondary">Silicone</a>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+        <div class="view-more-container">
+            <button id="viewMoreBtn" class="btn btn-secondary">View More</button>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
