@@ -253,14 +253,24 @@ def create_user():
     user['id'] = str(uuid.uuid4())
     user['createdAt'] = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
 
-    users = load_json(USERS_FILE, [])
-    users.append(user)
-    save_json(USERS_FILE, users)
+    try:
+        users = load_json(USERS_FILE, [])
+        users.append(user)
+        save_json(USERS_FILE, users)
 
-    # Send welcome email
-    send_welcome_email(user)
+        # Verify the user was actually saved
+        saved_users = load_json(USERS_FILE, [])
+        if not any(u['email'] == user['email'] for u in saved_users):
+            return jsonify({'error': 'Failed to save user data.'}), 500
 
-    return jsonify({'user': user}), 201
+        # Only send email if user was successfully saved
+        send_welcome_email(user)
+
+        return jsonify({'user': user}), 201
+
+    except Exception as e:
+        print(f'Error saving user: {e}')
+        return jsonify({'error': 'Failed to save user data.'}), 500
 
 
 @app.route('/api/register', methods=['POST'])

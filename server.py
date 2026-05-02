@@ -63,6 +63,17 @@ initialize_file(BANK_TRANSFERS_FILE, [])
 initialize_file(CUSTOMER_CARE_FILE, [])
 
 
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint to verify backend is working."""
+    return jsonify({
+        'status': 'ok',
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'data_dir_exists': os.path.exists(DATA_DIR),
+        'users_file_exists': os.path.exists(USERS_FILE)
+    })
+
+
 def update_local_order_status(order_id, new_status):
     orders = load_json(ORDERS_FILE, []) or []
     order = next((o for o in orders if o.get('id') == order_id), None)
@@ -460,13 +471,24 @@ def register():
         'createdAt': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
     }
 
-    users.append(new_user)
-    save_json(USERS_FILE, users)
+    try:
+        users.append(new_user)
+        save_json(USERS_FILE, users)
 
-    # Send welcome and admin notification emails for new registrations
-    send_welcome_email(new_user)
-    sanitized_user = {k: v for k, v in new_user.items() if k != 'password'}
-    return jsonify({'user': sanitized_user}), 201
+        # Verify the user was actually saved
+        saved_users = load_json(USERS_FILE, [])
+        if not any(user['email'] == email for user in saved_users):
+            return jsonify({'error': 'Failed to save user data.'}), 500
+
+        # Only send emails if user was successfully saved
+        send_welcome_email(new_user)
+
+        sanitized_user = {k: v for k, v in new_user.items() if k != 'password'}
+        return jsonify({'user': sanitized_user}), 201
+
+    except Exception as e:
+        print(f'Error saving user: {e}')
+        return jsonify({'error': 'Failed to save user data.'}), 500
 
 
 @app.route('/api/users', methods=['POST'])
