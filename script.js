@@ -230,7 +230,7 @@ function displayCart() {
         <div class="cart-item">
             <div class="cart-item-details">
                 <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-price">$${item.price.toFixed(2)} x ${item.quantity}</div>
+                <div class="cart-item-price">$${(item.price || 0).toFixed(2)} x ${item.quantity}</div>
             </div>
             <button class="cart-item-remove" onclick="removeFromCart(${item.id})">
                 <i class="fas fa-trash"></i>
@@ -242,7 +242,7 @@ function displayCart() {
 }
 
 function updateCartTotals() {
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0);
     const shipping = cart.length > 0 ? 1000 : 0;
     const total = subtotal + shipping;
     
