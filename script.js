@@ -98,6 +98,10 @@ async function fetchProducts(filter = 'all') {
             const response = await fetch(`${apiBase}/api/products?category=${encodeURIComponent(filter)}`);
             if (response.ok) {
                 data = await response.json();
+                // Handle both array format and object format {products: [...]}
+                if (data && typeof data === 'object' && data.products && Array.isArray(data.products)) {
+                    data = data.products;
+                }
                 if (Array.isArray(data) && data.length === 0) {
                     console.warn('Backend API returned an empty product list; falling back to local JSON.');
                     data = null;
