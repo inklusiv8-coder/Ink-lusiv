@@ -262,6 +262,12 @@ def create_user():
 
     return jsonify({'user': user}), 201
 
+
+@app.route('/api/register', methods=['POST'])
+def register_alias():
+    return create_user()
+
+
 # ORDERS API
 @app.route('/api/orders', methods=['POST'])
 def create_order():

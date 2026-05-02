@@ -469,6 +469,11 @@ def register():
     return jsonify({'user': sanitized_user}), 201
 
 
+@app.route('/api/users', methods=['POST'])
+def register_alias():
+    return register()
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
     payload = request.get_json() or {}

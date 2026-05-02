@@ -116,11 +116,12 @@ async function fetchProducts(filter = 'all') {
                     data = null;
                 }
                 if (!Array.isArray(data)) {
-                    console.warn('Backend API returned invalid product data; falling back to local JSON.');
+                    console.warn('Backend API returned invalid product data; falling back to local JSON.', data);
                     data = null;
                 }
             } else {
-                console.warn('Backend API returned non-ok status:', response.status);
+                const text = await response.text().catch(() => '');
+                console.warn('Backend API returned non-ok status:', response.status, text);
             }
         } catch (error) {
             console.warn('Backend API unavailable, falling back to local JSON:', error);
@@ -1097,61 +1098,85 @@ async function registerUser(userData) {
             return newUser;
         }
 
-        const response = await fetch(`${apiBase}/api/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                fullName: userData.fullName,
-                email: userData.email,
-                password: userData.password,
-                confirmPassword: userData.confirmPassword,
-                phoneNumber: userData.phoneNumber,
-                address: userData.address,
-                city: userData.city,
-                zipCode: userData.zipCode
-            })
-        });
+        const registrationEndpoints = [
+            `${apiBase}/api/register`,
+            `${apiBase}/api/users`
+        ];
 
-        const contentType = response.headers.get('Content-Type') || '';
-        const isJson = contentType.includes('application/json');
+        let response = null;
         let data = null;
+        let attemptedEndpoint = '';
 
-        if (isJson) {
-            data = await response.json();
-        }
-
-        if (!response.ok || !isJson) {
-            if (response.status === 405 || !isJson) {
-                const savedUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
-                if (savedUsers.some(user => user.email === userData.email)) {
-                    showNotification('This email is already registered.', 'error');
-                    return false;
-                }
-
-                const newUser = {
-                    id: Date.now().toString(),
-                    fullName: userData.fullName,
-                    email: userData.email,
-                    phoneNumber: userData.phoneNumber,
-                    address: userData.address,
-                    city: userData.city,
-                    zipCode: userData.zipCode,
-                    password: userData.password,
-                    createdAt: new Date().toISOString()
-                };
-
-                savedUsers.push(newUser);
-                localStorage.setItem('localUsers', JSON.stringify(savedUsers));
-                return newUser;
+        for (const endpoint of registrationEndpoints) {
+            attemptedEndpoint = endpoint;
+            try {
+                response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fullName: userData.fullName,
+                        email: userData.email,
+                        password: userData.password,
+                        confirmPassword: userData.confirmPassword,
+                        phoneNumber: userData.phoneNumber,
+                        address: userData.address,
+                        city: userData.city,
+                        zipCode: userData.zipCode
+                    })
+                });
+            } catch (fetchError) {
+                console.warn('Registration endpoint unavailable:', endpoint, fetchError);
+                continue;
             }
 
-            showNotification((data && data.error) || 'Registration failed.', 'error');
+            const contentType = response.headers.get('Content-Type') || '';
+            const isJson = contentType.includes('application/json');
+
+            if (isJson) {
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    console.warn('Registration response JSON parse failed:', endpoint, parseError);
+                }
+            }
+
+            if (response.ok) {
+                return data?.user || data;
+            }
+
+            if (response.status === 404) {
+                console.warn('Registration endpoint not found:', endpoint);
+                continue;
+            }
+
+            showNotification((data && data.error) || `Registration failed (${response.status}).`, 'error');
             return false;
         }
 
-        return data.user;
+        console.warn(`All registration endpoints failed. Last attempted: ${attemptedEndpoint}`);
+        const savedUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+        if (savedUsers.some(user => user.email === userData.email)) {
+            showNotification('This email is already registered.', 'error');
+            return false;
+        }
+
+        const newUser = {
+            id: Date.now().toString(),
+            fullName: userData.fullName,
+            email: userData.email,
+            phoneNumber: userData.phoneNumber,
+            address: userData.address,
+            city: userData.city,
+            zipCode: userData.zipCode,
+            password: userData.password,
+            createdAt: new Date().toISOString()
+        };
+
+        savedUsers.push(newUser);
+        localStorage.setItem('localUsers', JSON.stringify(savedUsers));
+        return newUser;
     } catch (error) {
         console.error(error);
         showNotification('Unable to register at this time.', 'error');
