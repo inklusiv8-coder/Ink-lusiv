@@ -1041,6 +1041,8 @@ function setupAuthModals() {
             confirmPassword: document.getElementById('confirmPassword').value
         };
         
+        console.log('Submitting registration data:', userData);
+        
         const registeredUser = await registerUser(userData);
         if (registeredUser) {
             showNotification('Registration successful! You are now logged in.');
@@ -1150,6 +1152,15 @@ async function registerUser(userData) {
                 console.warn('Registration endpoint not found:', endpoint);
                 continue;
             }
+
+            // Log the full error response for debugging
+            console.error('Registration failed:', {
+                endpoint,
+                status: response.status,
+                statusText: response.statusText,
+                data,
+                responseText: await response.text().catch(() => 'Could not read response')
+            });
 
             showNotification((data && data.error) || `Registration failed (${response.status}).`, 'error');
             return false;

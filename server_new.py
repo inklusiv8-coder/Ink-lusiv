@@ -255,16 +255,27 @@ def create_user():
 
     try:
         users = load_json(USERS_FILE, [])
-        users.append(user)
+        existing_user = next((u for u in users if u['email'] == user['email']), None)
+        
+        if existing_user:
+            # Update existing user
+            existing_user.update(user)
+            user = existing_user
+        else:
+            # Create new user
+            users.append(user)
+
         save_json(USERS_FILE, users)
 
         # Verify the user was actually saved
         saved_users = load_json(USERS_FILE, [])
-        if not any(u['email'] == user['email'] for u in saved_users):
+        saved_user = next((u for u in saved_users if u['email'] == user['email']), None)
+        if not saved_user:
             return jsonify({'error': 'Failed to save user data.'}), 500
 
-        # Only send email if user was successfully saved
-        send_welcome_email(user)
+        # Only send email if user was successfully saved and is new
+        if not existing_user:
+            send_welcome_email(user)
 
         return jsonify({'user': user}), 201
 

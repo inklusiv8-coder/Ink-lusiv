@@ -456,32 +456,48 @@ def register():
         return jsonify({'error': 'Passwords do not match.'}), 400
 
     users = load_json(USERS_FILE, [])
-    if any(user['email'] == email for user in users):
-        return jsonify({'error': 'Email is already registered.'}), 400
-
-    new_user = {
-        'id': str(uuid.uuid4()),
-        'fullName': payload.get('fullName', '').strip(),
-        'email': email,
-        'phoneNumber': payload.get('phoneNumber', '').strip(),
-        'address': payload.get('address', '').strip(),
-        'city': payload.get('city', '').strip(),
-        'zipCode': payload.get('zipCode', '').strip(),
-        'password': password,
-        'createdAt': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
-    }
+    existing_user = next((user for user in users if user['email'] == email), None)
+    
+    if existing_user:
+        # Update existing user
+        existing_user.update({
+            'fullName': payload.get('fullName', '').strip(),
+            'phoneNumber': payload.get('phoneNumber', '').strip(),
+            'address': payload.get('address', '').strip(),
+            'city': payload.get('city', '').strip(),
+            'zipCode': payload.get('zipCode', '').strip(),
+            'password': password,
+            'createdAt': existing_user.get('createdAt', datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'))
+        })
+        new_user = existing_user
+    else:
+        # Create new user
+        new_user = {
+            'id': str(uuid.uuid4()),
+            'fullName': payload.get('fullName', '').strip(),
+            'email': email,
+            'phoneNumber': payload.get('phoneNumber', '').strip(),
+            'address': payload.get('address', '').strip(),
+            'city': payload.get('city', '').strip(),
+            'zipCode': payload.get('zipCode', '').strip(),
+            'password': password,
+            'createdAt': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        }
+        users.append(new_user)
 
     try:
-        users.append(new_user)
         save_json(USERS_FILE, users)
 
         # Verify the user was actually saved
         saved_users = load_json(USERS_FILE, [])
-        if not any(user['email'] == email for user in saved_users):
+        saved_user = next((user for user in saved_users if user['email'] == email), None)
+        if not saved_user:
             return jsonify({'error': 'Failed to save user data.'}), 500
 
         # Only send emails if user was successfully saved
-        send_welcome_email(new_user)
+        if not existing_user:
+            # Only send welcome email for new users
+            send_welcome_email(new_user)
 
         sanitized_user = {k: v for k, v in new_user.items() if k != 'password'}
         return jsonify({'user': sanitized_user}), 201
