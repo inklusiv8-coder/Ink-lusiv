@@ -1069,12 +1069,19 @@ async function registerUser(userData) {
             return newUser;
         }
 
-        const response = await fetch('/api/register', {
+        const response = await fetch(`${apiBase}/api/users`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(userData)
+            body: JSON.stringify({
+                fullName: userData.fullName,
+                email: userData.email,
+                phoneNumber: userData.phoneNumber,
+                address: userData.address,
+                city: userData.city,
+                zipCode: userData.zipCode
+            })
         });
 
         const contentType = response.headers.get('Content-Type') || '';

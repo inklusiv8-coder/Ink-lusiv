@@ -156,9 +156,9 @@ function displayCheckoutItems() {
         <div class="checkout-item">
             <div class="checkout-item-details">
                 <div class="checkout-item-name">${item.name} x ${item.quantity}</div>
-                <div class="checkout-item-price">$${item.price.toFixed(2)} each</div>
+                <div class="checkout-item-price">$${(item.price || 0).toFixed(2)} each</div>
             </div>
-            <div class="checkout-item-total">$${(item.price * item.quantity).toFixed(2)}</div>
+            <div class="checkout-item-total">$${((item.price || 0) * item.quantity).toFixed(2)}</div>
         </div>
     `).join('');
 }
@@ -177,7 +177,7 @@ function updateCheckoutTotals() {
         return;
     }
 
-    const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
     const shipping = cart.length > 0 ? 1000 : 0;
     const tax = subtotal * 0.08;
     const total = subtotal + shipping + tax;
