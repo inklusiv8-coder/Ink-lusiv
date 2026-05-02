@@ -24,8 +24,21 @@ try:
 except ImportError:
     pass
 
-# Supabase integration has been removed.
-# This server now uses local JSON files for products, users, orders, and bank transfers.
+# Supabase integration for users
+try:
+    from supabase import create_client, Client
+    SUPABASE_URL = os.getenv('SUPABASE_URL')
+    SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+    if SUPABASE_URL and SUPABASE_KEY:
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        USE_SUPABASE = True
+        print("✅ Supabase connected for user storage")
+    else:
+        USE_SUPABASE = False
+        print("⚠️ Supabase credentials not found, using local JSON fallback")
+except ImportError:
+    USE_SUPABASE = False
+    print("⚠️ Supabase library not installed, using local JSON fallback")
 
 # File system setup
 BASE_DIR = os.path.dirname(__file__)
@@ -254,34 +267,98 @@ def create_user():
     user['createdAt'] = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
 
     try:
-        users = load_json(USERS_FILE, [])
-        existing_user = next((u for u in users if u['email'] == user['email']), None)
-        
-        if existing_user:
-            # Update existing user
-            existing_user.update(user)
-            user = existing_user
+        if USE_SUPABASE:
+            # Try to save to Supabase
+            existing_user = supabase.table('users').select('*').eq('email', user['email']).execute()
+            if existing_user.data and len(existing_user.data) > 0:
+                # Update existing user
+                user_id = existing_user.data[0]['id']
+                supabase.table('users').update(user).eq('id', user_id).execute()
+                saved_user = {**existing_user.data[0], **user}
+                send_email = False
+            else:
+                # Create new user
+                result = supabase.table('users').insert(user).execute()
+                saved_user = result.data[0] if result.data else user
+                send_email = True
+
+            # Verify save
+            verify_result = supabase.table('users').select('*').eq('email', user['email']).execute()
+            if not verify_result.data or len(verify_result.data) == 0:
+                return jsonify({'error': 'Failed to save user to database.'}), 500
+
+            saved_user = verify_result.data[0]
         else:
-            # Create new user
-            users.append(user)
+            # Fallback to local JSON
+            users = load_json(USERS_FILE, [])
+            existing_user = next((u for u in users if u['email'] == user['email']), None)
+            
+            if existing_user:
+                existing_user.update(user)
+                saved_user = existing_user
+                send_email = False
+            else:
+                users.append(user)
+                saved_user = user
+                send_email = True
 
-        save_json(USERS_FILE, users)
+            save_json(USERS_FILE, users)
 
-        # Verify the user was actually saved
-        saved_users = load_json(USERS_FILE, [])
-        saved_user = next((u for u in saved_users if u['email'] == user['email']), None)
-        if not saved_user:
-            return jsonify({'error': 'Failed to save user data.'}), 500
+            # Verify local save
+            saved_users = load_json(USERS_FILE, [])
+            if not any(u['email'] == user['email'] for u in saved_users):
+                return jsonify({'error': 'Failed to save user data.'}), 500
 
-        # Only send email if user was successfully saved and is new
-        if not existing_user:
-            send_welcome_email(user)
+        # Send email only for new users
+        if send_email:
+            send_welcome_email(saved_user)
 
-        return jsonify({'user': user}), 201
+        return jsonify({'user': saved_user}), 201
 
     except Exception as e:
         print(f'Error saving user: {e}')
         return jsonify({'error': 'Failed to save user data.'}), 500
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    """Get all users."""
+    try:
+        if USE_SUPABASE:
+            result = supabase.table('users').select('*').execute()
+            users = result.data or []
+        else:
+            users = load_json(USERS_FILE, [])
+        return jsonify({'users': users}), 200
+    except Exception as e:
+        print(f'Error retrieving users: {e}')
+        return jsonify({'error': 'Failed to retrieve users.'}), 500
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    """Login a user."""
+    data = request.get_json() or {}
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return jsonify({'error': 'Email and password are required.'}), 400
+
+    try:
+        if USE_SUPABASE:
+            result = supabase.table('users').select('*').eq('email', email).eq('password', password).execute()
+            user = result.data[0] if result.data else None
+        else:
+            users = load_json(USERS_FILE, [])
+            user = next((u for u in users if u['email'] == email and u.get('password') == password), None)
+
+        if not user:
+            return jsonify({'error': 'Invalid email or password.'}), 401
+
+        return jsonify({'user': user}), 200
+
+    except Exception as e:
+        print(f'Error logging in: {e}')
+        return jsonify({'error': 'Login failed.'}), 500
 
 
 @app.route('/api/register', methods=['POST'])

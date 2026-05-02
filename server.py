@@ -15,8 +15,21 @@ try:
 except ImportError:
     pass
 
-# Supabase integration has been removed.
-# The application now uses local JSON files for products, users, orders, and bank transfers.
+# Supabase integration for users
+try:
+    from supabase import create_client, Client
+    SUPABASE_URL = os.getenv('SUPABASE_URL')
+    SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+    if SUPABASE_URL and SUPABASE_KEY:
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        USE_SUPABASE = True
+        print("✅ Supabase connected for user storage")
+    else:
+        USE_SUPABASE = False
+        print("⚠️ Supabase credentials not found, using local JSON fallback")
+except ImportError:
+    USE_SUPABASE = False
+    print("⚠️ Supabase library not installed, using local JSON fallback")
 
 EMAIL_SENDER = os.getenv('EMAIL_SENDER', 'inklusiv8@gmail.com')
 EMAIL_APP_PASSWORD = os.getenv('EMAIL_APP_PASSWORD', 'dzxt tugy xwhq lewd')
@@ -455,48 +468,63 @@ def register():
     if password != confirm_password:
         return jsonify({'error': 'Passwords do not match.'}), 400
 
-    users = load_json(USERS_FILE, [])
-    existing_user = next((user for user in users if user['email'] == email), None)
-    
-    if existing_user:
-        # Update existing user
-        existing_user.update({
-            'fullName': payload.get('fullName', '').strip(),
-            'phoneNumber': payload.get('phoneNumber', '').strip(),
-            'address': payload.get('address', '').strip(),
-            'city': payload.get('city', '').strip(),
-            'zipCode': payload.get('zipCode', '').strip(),
-            'password': password,
-            'createdAt': existing_user.get('createdAt', datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'))
-        })
-        new_user = existing_user
-    else:
-        # Create new user
-        new_user = {
-            'id': str(uuid.uuid4()),
-            'fullName': payload.get('fullName', '').strip(),
-            'email': email,
-            'phoneNumber': payload.get('phoneNumber', '').strip(),
-            'address': payload.get('address', '').strip(),
-            'city': payload.get('city', '').strip(),
-            'zipCode': payload.get('zipCode', '').strip(),
-            'password': password,
-            'createdAt': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
-        }
-        users.append(new_user)
+    user_data = {
+        'fullName': payload.get('fullName', '').strip(),
+        'email': email,
+        'phoneNumber': payload.get('phoneNumber', '').strip(),
+        'address': payload.get('address', '').strip(),
+        'city': payload.get('city', '').strip(),
+        'zipCode': payload.get('zipCode', '').strip(),
+        'password': password,
+        'createdAt': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+    }
 
     try:
-        save_json(USERS_FILE, users)
+        if USE_SUPABASE:
+            # Try to save to Supabase first
+            existing_user = supabase.table('users').select('*').eq('email', email).execute()
+            if existing_user.data and len(existing_user.data) > 0:
+                # Update existing user
+                user_id = existing_user.data[0]['id']
+                update_data = {k: v for k, v in user_data.items() if k != 'createdAt'}
+                supabase.table('users').update(update_data).eq('id', user_id).execute()
+                new_user = {**existing_user.data[0], **update_data}
+                send_email = False  # Don't send email for updates
+            else:
+                # Create new user
+                result = supabase.table('users').insert(user_data).execute()
+                new_user = result.data[0] if result.data else user_data
+                send_email = True
 
-        # Verify the user was actually saved
-        saved_users = load_json(USERS_FILE, [])
-        saved_user = next((user for user in saved_users if user['email'] == email), None)
-        if not saved_user:
-            return jsonify({'error': 'Failed to save user data.'}), 500
+            # Verify the user was saved to Supabase
+            verify_result = supabase.table('users').select('*').eq('email', email).execute()
+            if not verify_result.data or len(verify_result.data) == 0:
+                return jsonify({'error': 'Failed to save user to database.'}), 500
 
-        # Only send emails if user was successfully saved
-        if not existing_user:
-            # Only send welcome email for new users
+            new_user = verify_result.data[0]
+        else:
+            # Fallback to local JSON
+            users = load_json(USERS_FILE, [])
+            existing_user = next((user for user in users if user['email'] == email), None)
+
+            if existing_user:
+                existing_user.update(user_data)
+                new_user = existing_user
+                send_email = False
+            else:
+                new_user = {**user_data, 'id': str(uuid.uuid4())}
+                users.append(new_user)
+                send_email = True
+
+            save_json(USERS_FILE, users)
+
+            # Verify local save
+            saved_users = load_json(USERS_FILE, [])
+            if not any(user['email'] == email for user in saved_users):
+                return jsonify({'error': 'Failed to save user data.'}), 500
+
+        # Send welcome email only for new users
+        if send_email:
             send_welcome_email(new_user)
 
         sanitized_user = {k: v for k, v in new_user.items() if k != 'password'}
@@ -505,6 +533,25 @@ def register():
     except Exception as e:
         print(f'Error saving user: {e}')
         return jsonify({'error': 'Failed to save user data.'}), 500
+
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    """Get all users for admin panel."""
+    try:
+        if USE_SUPABASE:
+            result = supabase.table('users').select('*').execute()
+            users = result.data or []
+        else:
+            users = load_json(USERS_FILE, [])
+
+        # Remove passwords from response
+        sanitized_users = [{k: v for k, v in user.items() if k != 'password'} for user in users]
+        return jsonify(sanitized_users)
+
+    except Exception as e:
+        print(f'Error fetching users: {e}')
+        return jsonify({'error': 'Failed to fetch users.'}), 500
 
 
 @app.route('/api/users', methods=['POST'])
@@ -521,14 +568,25 @@ def login():
     if not email or not password:
         return jsonify({'error': 'Email and password are required.'}), 400
 
-    users = load_json(USERS_FILE, [])
-    user = next((user for user in users if user['email'] == email and user['password'] == password), None)
+    try:
+        if USE_SUPABASE:
+            # Check Supabase for user
+            result = supabase.table('users').select('*').eq('email', email).eq('password', password).execute()
+            user = result.data[0] if result.data and len(result.data) > 0 else None
+        else:
+            # Fallback to local JSON
+            users = load_json(USERS_FILE, [])
+            user = next((user for user in users if user['email'] == email and user['password'] == password), None)
 
-    if not user:
-        return jsonify({'error': 'Invalid email or password.'}), 401
+        if not user:
+            return jsonify({'error': 'Invalid email or password.'}), 401
 
-    sanitized_user = {k: v for k, v in user.items() if k != 'password'}
-    return jsonify({'user': sanitized_user})
+        sanitized_user = {k: v for k, v in user.items() if k != 'password'}
+        return jsonify({'user': sanitized_user})
+
+    except Exception as e:
+        print(f'Error during login: {e}')
+        return jsonify({'error': 'Login failed.'}), 500
 
 
 @app.route('/api/orders', methods=['POST'])
