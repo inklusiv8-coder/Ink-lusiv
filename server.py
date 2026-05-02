@@ -22,8 +22,8 @@ try:
     SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
     if SUPABASE_URL and SUPABASE_KEY:
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        USE_SUPABASE = False  # Set to True to enable Supabase storage
-        print("⚠️ Supabase library installed but disabled. Users table exists and ready.")
+        USE_SUPABASE = True  # Set to True to enable Supabase storage
+        print("✅ Supabase enabled. Users will be saved to Supabase users table.")
     else:
         USE_SUPABASE = False
         print("⚠️ Supabase credentials not found, using local JSON fallback")
